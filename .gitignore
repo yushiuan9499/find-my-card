@@ -1,0 +1,16 @@
+# C/C++ build files
+*.o
+*.exe
+*.out
+
+build/
+.clangd/
+
+# VS Code
+.vscode
+# nvim LSP
+.cache/
+# macOS
+.DS_Store
+# Compile commands for LSP
+compile_commands.json
