@@ -13,5 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: add dependencies
+      run: |
+        sudo apt update 
+        sudo apt install libjsoncpp-dev 
     - name: build
       run: ./tools/build.sh
