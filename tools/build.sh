@@ -10,5 +10,5 @@ cd ..
 if ! command -v bear >/dev/null 2>&1; then
   make
 else
-  bear -- make
+  bear --output build/compile_commands.json -- make
 fi
