@@ -8,6 +8,7 @@ class Card : public Core {
 private:
   // Unique identifier for the card
   std::string id;
+  long long balance;
 
 protected:
 public:
@@ -20,6 +21,16 @@ public:
    * @return The ID of the card
    */
   std::string getId() const;
+  /**
+   * @brief Get the balance of the card
+   * @return The balance of the card
+   */
+  long long getBalance() const;
+  /**
+   * @brief increase or decrease the balance of the card
+   * @param amount: the amount to be added or subtracted from the balance
+   */
+  void adjustBalance(long long amount);
 
   virtual Json::Value *dump2JSON(void) const override;
 };

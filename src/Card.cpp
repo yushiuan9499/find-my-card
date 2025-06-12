@@ -26,3 +26,7 @@ Json::Value *Card::dump2JSON(void) const {
   (*json)["id"] = id;
   return json; // Return the JSON representation of the card
 }
+long long Card::getBalance() const { return balance; }
+void Card::adjustBalance(long long amount) {
+  balance += amount; // Adjust the balance by the specified amount
+}
