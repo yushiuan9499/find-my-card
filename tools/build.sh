@@ -4,6 +4,7 @@
 mkdir -p build
 cd build
 mkdir -p obj
+mkdir -p obj/Core
 cd ..
 
 # 編譯
