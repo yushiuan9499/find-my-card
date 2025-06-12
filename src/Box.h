@@ -5,6 +5,7 @@
 #include <map>
 
 class Card;
+class Server;
 
 class Box {
 private:
@@ -12,6 +13,7 @@ private:
   std::map<std::string, Card *> cards;
   // GPS location of the box
   Labeled_GPS gps;
+  Server *server; // Pointer to the server for communication
 
 protected:
 public:
@@ -21,18 +23,19 @@ public:
   /**
    * @brief put a card into the box
    * @param card: pointer to the card to be added
-   * @retval true if the card is added successfully, false if some error occurs
+   * @return nullptr if the card add successfully
+   *         otherwise, return the card itself
    */
-  bool addCard(Card *card);
+  Card *addCard(Card *card);
 
   /**
    * @brief retrieve a card from the box
    * @param usrName: the username of the user who wants to retrieve the card
-   * @param cardName: the name of the card to be retrieved
+   * @param cardId: the id of the card to be retrieved
    * @param passwd: the password of the user
    * @return: pointer to the card if found, nullptr if not found or error occurs
    */
-  Card *retrieveCard(const std::string &usrName, const std::string &cardName,
+  Card *retrieveCard(const std::string &usrName, const std::string &cardId,
                      const std::string &passwd);
   /**
    * @brief get the GPS location of the box
