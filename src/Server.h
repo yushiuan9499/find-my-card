@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "Core/Labeled_GPS.h"
 #include <map>
 #include <string>
 
@@ -20,14 +21,18 @@ private:
   std::string address;
   // Server's email password
   std::string emailPasswd;
+  // Next available user ID
+  long long nextId;
 
   EmailServer *emailServer;
   /**
    * @brief Send a notification to the user
    * @param id: the id of the user
-   * @param message: the message to be sent to the user
+   * @param subject: the subject of the email
+   * @param body: the body to be sent to the user
    */
-  void notifyUser(long long id, const std::string &message);
+  void notifyUser(long long id, const std::string &subject,
+                  const std::string &body) const;
 
 protected:
 public:
@@ -40,8 +45,8 @@ public:
    * @param usrName: the username of the user
    * @param passwd: the password of the user
    * @param emailAddr: the email address of the user
-   * @return true if the user is added successfully, false if the username
-   * already exists
+   * @retval true: the user is added successfully
+   *         false: the username already exists or the email address is invalid
    */
   bool addUser(const std::string &usrName, const std::string &passwd,
                const std::string &emailAddr);
@@ -59,14 +64,24 @@ public:
    * @param passwd: the password of the user
    * @return true if the username and password match, false otherwise
    */
-  bool checkUser(const std::string &usrName, const std::string &passwd);
+  bool checkUser(const std::string &usrName, const std::string &passwd) const;
+
+  /**
+   * @brief Add a card to the server
+   * @param owner: the username of the owner of the card
+   * @param passwd: the password of the owner of the card
+   * @param id: the ID of the card
+   * @return true if the card is added successfully, false if the owner does not
+   */
+  bool addCard(const std::string &owner, const std::string &passwd,
+               const std::string &id);
 
   /**
    * @brief notify server a card found
    * @param id: the ID of card
    * @retval true if the process is successful, false if error occurs
    */
-  bool notifyCardFound(const std::string &id);
+  bool notifyCardFound(const std::string &id, const Labeled_GPS &gps) const;
 };
 
 #endif // SERVER_H
