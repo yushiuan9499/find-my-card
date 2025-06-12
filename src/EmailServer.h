@@ -11,6 +11,9 @@ enum EmailError {
   INVALID_RECIPIENT,
   WRONG_SENDER_OR_PASSWORD,
   EMAIL_NOT_FOUND,
+  ADDRESS_ALREADY_EXISTS,
+  INVALID_ADDRESS,
+  INVALID_PASSWORD
 };
 
 struct Email {
@@ -26,16 +29,19 @@ private:
   std::map<std::string, long long> addressId;
   // id -> password mapping
   std::map<long long, std::string> idPasswd;
-  std::map<long long, std::map<long long, Email *>>
-      emails;       // id -> email ID -> Email object
-  long long nextId; // Next available ID for new users
+  // id -> email ID -> Email object
+  std::map<long long, std::map<long long, Email *>> emails;
+  // Counter for email IDs per user
+  std::map<long long, long long> emailIdCounter;
+  // Next available ID for new users
+  long long nextId;
   /**
    * @brief Check if the email&password match
    * @param address: email address of the user
    * @param passwd: password for the user
    * @return true if the email and password match, false otherwise
    */
-  bool checkPasswd(const std::string &address, const std::string &passwd);
+  bool checkPasswd(const std::string &address, const std::string &passwd) const;
 
 protected:
 public:
@@ -45,10 +51,11 @@ public:
    * @brief Add a addres to the email server
    * @param address: email address of the user
    * @param passwd: password for the user
-   * @return true if the user is added successfully, false if the address
-   * already exists
+   * @retval ADDRESS_ALREADY_EXISTS: the address already exists,
+   *         INVALID_ADDRESS: the address's format is invalid,
+   *         INVALID_PASSWORD: the password is invalid,
    */
-  bool addAddress(const std::string &address, const std::string &passwd);
+  EmailError addAddress(const std::string &address, const std::string &passwd);
 
   /**
    * @brief Remove an address from the email server
@@ -75,10 +82,10 @@ public:
    * @brief Get all emails in box
    * @param address: email address of the user
    * @param passwd: password for the user
-   * @return map of email IDs to Email objects
+   * @return set of email IDs to Email objects
    */
-  const std::map<long long, Email *> &getEmails(const std::string &address,
-                                                const std::string &passwd);
+  const std::set<long long> getEmails(const std::string &address,
+                                      const std::string &passwd) const;
   /**
    * @brief Get an email by ID
    * @param address: email address of the user
@@ -87,7 +94,7 @@ public:
    * @return pointer to the Email object if found, nullptr if not found or error
    */
   Email const *getEmailById(const std::string &address,
-                            const std::string &passwd, long long emailId);
+                            const std::string &passwd, long long emailId) const;
   /**
    * @brief Delete an email by ID
    * @param address: email address of the user
