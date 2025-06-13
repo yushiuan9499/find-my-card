@@ -2,15 +2,19 @@
 #include "Box.h"
 #include "Card.h"
 #include "EmailServer.h"
+#include "Server.h"
 #include <cassert>
 #include <iostream>
 using namespace std;
 
-User::User(const string &usrName, const string &passwd,
+User::User(Server *server, const string &usrName, const string &passwd,
            EmailServer *emailServer, const string &emailAddr,
            const string &emailPasswd)
-    : username(usrName), password(passwd), email(emailAddr),
-      emailPassword(emailPasswd), emailServer(emailServer) {}
+    : server(server), username(usrName), password(passwd), email(emailAddr),
+      emailPassword(emailPasswd), emailServer(emailServer) {
+  this->server->addUser(usrName, passwd, emailAddr);
+  this->emailServer->addAddress(emailAddr, emailPasswd);
+}
 User::~User() {
   for (Card *card : cards) {
     delete card; // Clean up dynamically allocated cards

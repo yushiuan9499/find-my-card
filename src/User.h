@@ -7,6 +7,7 @@
 class Card;
 class Box;
 class EmailServer;
+class Server;
 
 class User {
 private:
@@ -16,10 +17,11 @@ private:
   std::string email;
   std::set<Card *> cards;   // Cards owned by the user
   EmailServer *emailServer; // Pointer to the email server for communication
+  Server *server;           // Pointer to the server for user management
 
 protected:
 public:
-  User(const std::string &usrName, const std::string &passwd,
+  User(Server *server, const std::string &usrName, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
   virtual ~User();
