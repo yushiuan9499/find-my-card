@@ -1,9 +1,11 @@
 #include "Box.h"
 #include "Card.h"
+#include "Core/ee1520_Common.h"
 #include "Server.h"
 #include <cassert>
 using namespace std;
 Box::Box(const Labeled_GPS &gpsLocation) : gps(gpsLocation) {}
+Box::Box(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
 Box::~Box() {
   // Clean up the cards in the box
   for (auto &pair : cards) {
@@ -41,4 +43,39 @@ Card *Box::retrieveCard(const std::string &usrName, const std::string &cardId,
 }
 Labeled_GPS Box::getGPSLocation() const {
   return gps; // Return the GPS location of the box
+}
+
+Json::Value *Box::dump2JSON() const {
+  Json::Value *json = new Json::Value();
+  (*json)["gps"] = gps.dump2JSON();
+  (*json)["cards"] = Json::Value(Json::arrayValue);
+  for (const auto &pair : cards) {
+    (*json)["cards"].append(pair.second->dump2JSON());
+  }
+  return json; // Return the JSON representation of the box
+}
+
+void Box::JSON2Object(Json::Value *arg_json_ptr) {
+  ee1520_Exception lv_exception{};
+  ee1520_Exception *lv_exception_ptr = &lv_exception;
+
+  JSON2Object_precheck(arg_json_ptr, lv_exception_ptr,
+                       EE1520_ERROR_JSON2OBJECT_BOX);
+  if (!hasException(Object, (*arg_json_ptr)["GPS"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_BOX, "GPS")) {
+    this->gps.JSON2Object(&(*arg_json_ptr)["GPS"]);
+  }
+  if (!hasException(Array, (*arg_json_ptr)["cards"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_BOX, "cards")) {
+    for (unsigned int i = 0; i < (*arg_json_ptr)["cards"].size(); i++) {
+      if (!hasException(Object, (*arg_json_ptr)["card"][i], lv_exception_ptr,
+                        EE1520_ERROR_JSON2OBJECT_BOX, "cards")) {
+        Card *card = new Card(&(*arg_json_ptr)["cards"][i]);
+        this->addCard(card);
+      }
+    }
+  }
+  if ((lv_exception_ptr->info_vector.size() != 0)) {
+    throw(*lv_exception_ptr); // Throw exception if there are errors
+  }
 }

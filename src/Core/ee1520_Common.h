@@ -169,6 +169,10 @@ public:
 #define EE1520_ERROR_JSON2OBJECT_PERSONAL_TIMED_GPS_RECORD -51
 #define EE1520_ERROR_MAX -52
 
+#define EE1520_ERROR_JSON2OBJECT_BOX -53
+#define EE1520_ERROR_JSON2OBJECT_CARD -54
+#define EE1520_ERROR_JSON2OBJECT_USER -55
+
 extern const vector<std::string> keys_Thing;
 extern const vector<std::string> keys_Locatable;
 extern const vector<std::string> keys_Holdable;

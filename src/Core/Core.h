@@ -24,7 +24,7 @@ public:
   Core(void);
   Core(std::string, std::string, std::string);
 
-  virtual Json::Value *dump2JSON(void);
+  virtual Json::Value *dump2JSON(void) const;
   virtual void JSON2Object(Json::Value *);
 };
 

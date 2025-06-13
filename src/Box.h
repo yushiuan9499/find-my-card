@@ -7,7 +7,7 @@
 class Card;
 class Server;
 
-class Box {
+class Box : public Core {
 private:
   // id --> card mapping
   std::map<std::string, Card *> cards;
@@ -18,6 +18,7 @@ private:
 protected:
 public:
   Box(const Labeled_GPS &gpsLocation);
+  Box(Json::Value *arg_json_ptr);
   virtual ~Box();
 
   /**
@@ -42,6 +43,9 @@ public:
    * @return: Labeled_GPS object representing the GPS location of the box
    */
   Labeled_GPS getGPSLocation() const;
+
+  virtual Json::Value *dump2JSON(void) const override;
+  virtual void JSON2Object(Json::Value *arg_json_ptr) override;
 };
 
 #endif // BOX_H

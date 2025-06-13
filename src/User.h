@@ -1,6 +1,7 @@
 #ifndef USER_H
 #define USER_H
 
+#include "Core/Core.h"
 #include <set>
 #include <string>
 
@@ -9,7 +10,7 @@ class Box;
 class EmailServer;
 class Server;
 
-class User {
+class User : public Core {
 private:
   std::string username;
   std::string emailPassword;
@@ -24,6 +25,7 @@ public:
   User(Server *server, const std::string &usrName, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
+  User(Json::Value *arg_json_ptr);
   virtual ~User();
 
   /**
@@ -61,6 +63,9 @@ public:
    * @brief get all email IDs associated with the user
    */
   std::set<long long> getEmailIds() const;
+
+  virtual Json::Value *dump2JSON(void) const override;
+  virtual void JSON2Object(Json::Value *arg_json_ptr) override;
 };
 
 #endif // USER_H

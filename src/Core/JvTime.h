@@ -24,15 +24,15 @@ class JvTime
   JvTime(const char *);
   JvTime() { }
   int Parse(const char *);
-  struct std::tm * getStdTM(void);
+  struct std::tm * getStdTM(void) const;
   int setStdTM(struct std::tm *);
-  std::string * getTimeString(void);
+  std::string * getTimeString(void) const;
 
   bool operator==(JvTime& arg_jvt);
   bool operator< (JvTime& arg_jvt);
   double operator-(JvTime& arg_jvt);
   
-  virtual Json::Value * dump2JSON(void);
+  virtual Json::Value * dump2JSON(void) const;
   virtual void JSON2Object(Json::Value *);
 };
 

@@ -25,7 +25,7 @@ Core::Core(std::string arg_host_url, std::string arg_class_name,
   // std::cout << "Core constructor 2 called\n";
 }
 
-Json::Value *Core::dump2JSON(void) {
+Json::Value *Core::dump2JSON(void)const {
   Json::Value *result_ptr = new Json::Value();
   if (this->host_url != "") {
     (*result_ptr)["host url"] = this->host_url;

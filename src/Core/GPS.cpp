@@ -142,7 +142,7 @@ GPS_DD::operator<
 
 Json::Value *
 GPS_DD::dump2JSON
-(void)
+(void) const
 {
   // printf("GPS_DD dump2JSON start\n");
   Json::Value * result_ptr = new Json::Value(); // <---

@@ -25,7 +25,7 @@ public:
   bool operator<(GPS_DD &another);
 
   // Json::Value * dump2JSON(void);
-  virtual Json::Value *dump2JSON(void);
+  virtual Json::Value *dump2JSON(void) const override;
   virtual void JSON2Object(Json::Value *);
 };
 

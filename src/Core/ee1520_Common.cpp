@@ -2,8 +2,8 @@
 // ee1520_JSON.cpp
 // #define _EE1520_DEBUG_
 
-#include "JvTime.h"
 #include "ee1520_Common.h"
+#include "JvTime.h"
 #include "ee1520_Exception.h"
 #include <cassert>
 
@@ -17,7 +17,7 @@
  * @Exception ERROR_JSON_KEY_MISSING: JSON物件為NULL或不是物件
  * @Exception ERROR_JSON_KEY_TYPE_MISMATCHED: JSON物件不是物件
  */
-void JSON2Object_precheck(Json::Value *arg_json_ptr,
+void JSON2Object_precheck(const Json::Value *arg_json_ptr,
                           ee1520_Exception *arg_exception_ptr,
                           int arg_where_code) {
   Exception_Info *ei_ptr = NULL;
@@ -169,7 +169,7 @@ char *myFile2String(char *f_name) {
  * 將檔案內容讀取成JSON物件
  * @param f_name: 檔案名稱
  * @param jv_ptr: JSON物件指標
- * @return result_ptr: 檔案內容字串
+ * @return result: 結果
  */
 int myFile2JSON(char *f_name, Json::Value *jv_ptr) {
   std::cerr << "myFile2JSON called" << std::endl;

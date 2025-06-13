@@ -71,7 +71,7 @@ JvTime::JvTime(const char *time_str) {
   return;
 }
 
-struct std::tm *JvTime::getStdTM(void) {
+struct std::tm *JvTime::getStdTM(void) const {
   struct std::tm *result = (struct std::tm *)malloc(sizeof(struct std::tm));
   bzero(result, sizeof(struct std::tm));
 
@@ -102,7 +102,7 @@ int JvTime::setStdTM(struct std::tm *arg_tm_ptr) {
   return 0;
 }
 
-std::string *JvTime::getTimeString(void) {
+std::string *JvTime::getTimeString(void) const {
   struct std::tm *tm_ptr = this->getStdTM();
 
   char buffer[128];
@@ -181,7 +181,7 @@ double JvTime::operator-(JvTime &arg_jvt) {
   return result_diff;
 }
 
-Json::Value *JvTime::dump2JSON(void) {
+Json::Value *JvTime::dump2JSON(void) const {
   Json::Value *result_ptr = new Json::Value();
   (*result_ptr)["time"] = (*(this->getTimeString()));
   return result_ptr;

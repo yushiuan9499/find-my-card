@@ -41,7 +41,7 @@ public:
 };
 
 int produceErrorJSON(ee1520_Exception, const char[], Json::Value *, int);
-void JSON2Object_precheck(Json::Value *, ee1520_Exception *, int);
+void JSON2Object_precheck(const Json::Value *, ee1520_Exception *, int);
 void JSON2Object_appendEI(ee1520_Exception &, ee1520_Exception *, unsigned int);
 
 #endif /* _EE1520_EXCEPTION_ */

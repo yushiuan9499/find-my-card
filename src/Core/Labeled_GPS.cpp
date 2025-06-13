@@ -36,7 +36,7 @@ Labeled_GPS::operator==
 
 Json::Value *
 Labeled_GPS::dump2JSON
-()
+() const
 {
   // option #1
   // v-table pointer will link to the class GPS_DD (becuase of object creation)

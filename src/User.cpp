@@ -15,6 +15,7 @@ User::User(Server *server, const string &usrName, const string &passwd,
   this->server->addUser(usrName, passwd, emailAddr);
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
+User::User(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
 User::~User() {
   for (Card *card : cards) {
     delete card; // Clean up dynamically allocated cards
@@ -79,4 +80,59 @@ set<long long> User::getEmailIds() const {
     return emailServer->getEmails(username, emailPassword);
   }
   return {}; // Return an empty set if email server is not set
+}
+
+Json::Value *User::dump2JSON() const {
+  Json::Value *json = new Json::Value();
+  (*json)["username"] = username;
+  (*json)["email"] = email;
+  (*json)["emailPassword"] = emailPassword;
+  (*json)["password"] = password;
+  (*json)["cards"] = Json::Value(Json::arrayValue);
+
+  for (const Card *card : cards) {
+    (*json)["cards"].append(card->dump2JSON());
+  }
+
+  return json; // Return the JSON representation of the user
+}
+
+void User::JSON2Object(Json::Value *arg_json_ptr) {
+  ee1520_Exception lv_exception{};
+  ee1520_Exception *lv_exception_ptr = &lv_exception;
+
+  JSON2Object_precheck(arg_json_ptr, lv_exception_ptr,
+                       EE1520_ERROR_JSON2OBJECT_USER);
+
+  if (!hasException(String, (*arg_json_ptr)["username"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_USER, "username")) {
+    this->username = (*arg_json_ptr)["username"].asString();
+  }
+  if (!hasException(String, (*arg_json_ptr)["email"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_USER, "email")) {
+    this->email = (*arg_json_ptr)["email"].asString();
+  }
+  if (!hasException(String, (*arg_json_ptr)["emailPassword"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_USER, "emailPassword")) {
+    this->emailPassword = (*arg_json_ptr)["emailPassword"].asString();
+  }
+  if (!hasException(String, (*arg_json_ptr)["password"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_USER, "password")) {
+    this->password = (*arg_json_ptr)["password"].asString();
+  }
+
+  if (!hasException(Array, (*arg_json_ptr)["cards"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_USER, "cards")) {
+    for (unsigned int i = 0; i < (*arg_json_ptr)["cards"].size(); i++) {
+      if (!hasException(Object, (*arg_json_ptr)["cards"][i], lv_exception_ptr,
+                        EE1520_ERROR_JSON2OBJECT_USER, "cards")) {
+        Card *card = new Card(&(*arg_json_ptr)["cards"][i]);
+        this->addCard(card);
+      }
+    }
+  }
+
+  if (lv_exception_ptr->info_vector.size() != 0) {
+    throw(*lv_exception_ptr); // Throw exception if there are errors
+  }
 }
