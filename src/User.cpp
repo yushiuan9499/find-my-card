@@ -17,33 +17,57 @@ User::User(Server *server, const string &usrName, const string &passwd,
 }
 User::User(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
 User::~User() {
-  for (Card *card : cards) {
-    delete card; // Clean up dynamically allocated cards
+  for (auto card : cards) {
+    delete card.second; // Clean up dynamically allocated cards
   }
 }
 
 void User::addCard(Card *card) {
   if (card) {
-    cards.insert(card);
+    cards[card->getId()] = card;
   }
 }
 
 void User::removeCard(Card *card) {
   if (card) {
-    cards.erase(card);
+    cards.erase(card->getId());
   }
+}
+
+Card *User::removeCard(const std::string &id) {
+  auto it = cards.find(id);
+  if (it != cards.end()) {
+    cards.erase(it);   // Remove the card from the collection
+    return it->second; // Return the removed card
+  }
+  return nullptr; // Card not found
 }
 
 bool User::dropCard(Box *box, Card *card) {
   if (!box || !card) {
     return false; // Invalid box or card
   }
-  if (cards.find(card) == cards.end()) {
+  if (cards.find(card->getId()) == cards.end()) {
     return false; // Card not owned by the user
   }
   Card *result = box->addCard(card);
   if (result == nullptr) {
     removeCard(card);
+    return true;
+  }
+  return false; // Failed to add to the box
+}
+bool User::dropCard(Box *box, const std::string &cardId) {
+  if (!box || cardId.empty()) {
+    return false; // Invalid box or card ID
+  }
+  auto it = cards.find(cardId);
+  if (it == cards.end()) {
+    return false; // Card not owned by the user
+  }
+  Card *result = box->addCard(it->second);
+  if (result == nullptr) {
+    removeCard(cardId);
     return true;
   }
   return false; // Failed to add to the box
@@ -54,7 +78,7 @@ Card *User::retrieveCard(Box *box, const std::string &cardId) {
     return nullptr; // Invalid box
   }
   Card *card = box->retrieveCard(username, cardId, password);
-  assert(cards.find(card) == cards.end() &&
+  assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
     addCard(card); // Add the card back to the user's collection
@@ -90,8 +114,8 @@ Json::Value *User::dump2JSON() const {
   (*json)["password"] = password;
   (*json)["cards"] = Json::Value(Json::arrayValue);
 
-  for (const Card *card : cards) {
-    (*json)["cards"].append(*card->dump2JSON());
+  for (auto card : cards) {
+    (*json)["cards"].append(*card.second->dump2JSON());
   }
 
   return json; // Return the JSON representation of the user
