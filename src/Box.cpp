@@ -62,6 +62,21 @@ Labeled_GPS Box::getGPSLocation() const {
   return gps; // Return the GPS location of the box
 }
 
+int Box::redeemReward(const std::string &username, const std::string &password,
+                      int amount, Card *card) {
+  if (card == nullptr) {
+    return -1; // No card provided for payment
+  }
+  int ret = server->redeemReward(username, password, amount);
+  if (ret < 0) {
+    return -1; // Redemption failed
+  }
+  if (ret > 0) {
+    card->adjustBalance(ret); // Deduct the redeemed amount from the card
+  }
+  return ret; // Return the remaining balance after redemption
+}
+
 Json::Value *Box::dump2JSON() const {
   Json::Value *json = new Json::Value();
   (*json)["gps"] = *gps.dump2JSON();

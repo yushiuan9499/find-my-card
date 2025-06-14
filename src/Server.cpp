@@ -141,3 +141,19 @@ int Server::getBalance(const string &username, const string &password) const {
   }
   return rewardBalance.at(usrId.at(username)); // Return the user's balance
 }
+
+int Server::redeemReward(const string &username, const string &password,
+                         int amount) {
+  if (!checkUser(username, password)) {
+    return -1; // User does not exist or password does not match
+  }
+  long long userId = usrId[username];
+  if (amount < 0) {
+    amount = rewardBalance[userId]; // Redeem all available rewards
+  }
+  if (rewardBalance[userId] < amount) {
+    return -1; // Not enough balance to redeem
+  }
+  rewardBalance[userId] -= amount; // Deduct the redeemed amount
+  return amount;                   // Return the remaining balance
+}

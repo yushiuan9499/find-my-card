@@ -80,6 +80,15 @@ public:
                      const std::string &paymentCardId = "");
 
   /**
+   * @brief redeem a reward for the user
+   * @param box: pointer to the box where the reward will be redeemed
+   * @param cardId: the id of the card used for payment
+   * @param amount: the amount of reward to redeem, -1 for all available
+   * @return the reward balance after redemption,
+   *        or -1 if the user is invalid or the card is not found
+   */
+  int redeemReward(Box *box, const std::string &cardId, int amount = -1);
+  /**
    * @brief read the user's reward
    * @return the reward amount
    */

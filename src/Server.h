@@ -117,6 +117,15 @@ public:
    * @return the balance of the user if valid, otherwise -1
    */
   int getBalance(const string &username, const string &password) const;
+  /**
+   * @brief redeem a reward for a user
+   * @param username: the username of the user
+   * @param password: the password of the user
+   * @param amount: the amount of reward to redeem, -1 for all available
+   * @return the reward balance after redemption, or -1 if the user is invalid
+   */
+  int redeemReward(const std::string &username, const std::string &password,
+                   int amount);
 };
 
 #endif // SERVER_H

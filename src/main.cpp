@@ -49,5 +49,11 @@ int main() {
   cout << "box1: " << box1.dump2JSON()->toStyledString() << endl;
   // tobiichi3227 check its reward
   cout << "tobiichi3227's reward: " << tobiichi3227.readReward() << endl;
+  // tobiichi3227 redeem its reward
+  cout << tobiichi3227.redeemReward(&box1, "27182818284") << endl;
+  cout << "tobiichi3227 after redeem: "
+       << tobiichi3227.dump2JSON()->toStyledString() << endl;
+  cout << "tobiichi3227's reward after redeem: " << tobiichi3227.readReward()
+       << endl;
   return 0;
 }

@@ -45,6 +45,17 @@ public:
    */
   Labeled_GPS getGPSLocation() const;
 
+  /**
+   * @brief redeem a reward for a user
+   * @param username: the username of the user
+   * @param password: the password of the user
+   * @param amount: the amount of reward to redeem, -1 for all available
+   * @param card: pointer to the card for payment, if any
+   * @return the reward balance after redemption, or -1 if the user is invalid
+   */
+  int redeemReward(const std::string &username, const std::string &password,
+                   int amount, Card *card);
+
   virtual Json::Value *dump2JSON(void) const override;
   virtual void JSON2Object(Json::Value *arg_json_ptr) override;
 };

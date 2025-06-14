@@ -104,6 +104,21 @@ Card *User::retrieveCard(Box *box, const std::string &cardId,
   return card; // Return the retrieved card or nullptr if not found
 }
 
+int User::redeemReward(Box *box, const std::string &cardId, int amount) {
+  if (!box || cardId.empty()) {
+    return -1; // Invalid box or card ID
+  }
+  Card *paymentCard = cards[cardId];
+  if (!paymentCard) {
+    return -1; // Payment card not found
+  }
+  int reward = box->redeemReward(username, password, amount, paymentCard);
+  if (reward < 0) {
+    return -1; // Redemption failed
+  }
+  return reward; // Return the remaining balance after redemption
+}
+
 int User::readReward() const {
   if (server) {
     return server->getBalance(username, password);
