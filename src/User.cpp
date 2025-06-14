@@ -15,7 +15,12 @@ User::User(Server *server, const string &usrName, const string &passwd,
   this->server->addUser(usrName, passwd, emailAddr);
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
-User::User(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
+User::User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr)
+    : server(server), emailServer(emailServer) {
+  JSON2Object(arg_json_ptr);
+  this->server->addUser(username, password, email);
+  this->emailServer->addAddress(email, emailPassword);
+}
 User::~User() {
   for (auto card : cards) {
     delete card.second; // Clean up dynamically allocated cards
@@ -28,6 +33,16 @@ void User::addCard(Card *card) {
   }
 }
 
+bool User::addCardToServer(const std::string &id) {
+  if (server && !id.empty()) {
+    if (cards.find(id) == cards.end()) {
+      return false; // Card not exists in the user's collection
+    }
+    return server->addCard(username, password, id);
+  }
+  return false; // Failed to add card to the server or server not set
+}
+
 void User::removeCard(Card *card) {
   if (card) {
     cards.erase(card->getId());
@@ -37,8 +52,9 @@ void User::removeCard(Card *card) {
 Card *User::removeCard(const std::string &id) {
   auto it = cards.find(id);
   if (it != cards.end()) {
-    cards.erase(it);   // Remove the card from the collection
-    return it->second; // Return the removed card
+    auto card = it->second; // Get the card pointer
+    cards.erase(it);        // Remove the card from the collection
+    return card;
   }
   return nullptr; // Card not found
 }
@@ -98,7 +114,7 @@ int User::readReward() const {
 void User::readMail(int index) const {
   if (emailServer) {
     const Email *email =
-        emailServer->getEmailById(username, emailPassword, index);
+        emailServer->getEmailById(this->email, emailPassword, index);
     cout << "Reading email #" << index << ":" << "\n";
     cout << "Subject: " << email->subject << "\n";
     cout << "Body: " << email->body << "\n";

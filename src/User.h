@@ -26,7 +26,7 @@ public:
   User(Server *server, const std::string &usrName, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
-  User(Json::Value *arg_json_ptr);
+  User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr);
   virtual ~User();
 
   /**
@@ -34,6 +34,13 @@ public:
    * @param card: pointer to the card to be added
    */
   void addCard(Card *card);
+  /**
+   * @brief add the card to server
+   * @param id: the id of the card to be added
+   * @return true if the card is added successfully,
+   *        false if the card already exists or the server is not set
+   */
+  bool addCardToServer(const std::string &id);
   /**
    * @brief remove a card from the user's collection
    * @param card: pointer to the card to be removed

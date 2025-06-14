@@ -17,8 +17,8 @@ private:
 
 protected:
 public:
-  Box(const Labeled_GPS &gpsLocation);
-  Box(Json::Value *arg_json_ptr);
+  Box(Server *server, const Labeled_GPS &gpsLocation);
+  Box(Server *server, Json::Value *arg_json_ptr);
   virtual ~Box();
 
   /**

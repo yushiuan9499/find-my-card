@@ -5,8 +5,11 @@
 #include <algorithm>
 #include <cassert>
 using namespace std;
-Box::Box(const Labeled_GPS &gpsLocation) : gps(gpsLocation) {}
-Box::Box(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
+Box::Box(Server *server, const Labeled_GPS &gpsLocation)
+    : server(server), gps(gpsLocation) {}
+Box::Box(Server *server, Json::Value *arg_json_ptr) : server(server) {
+  JSON2Object(arg_json_ptr);
+}
 Box::~Box() {
   // Clean up the cards in the box
   for (auto &pair : cards) {

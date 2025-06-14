@@ -8,7 +8,9 @@ using namespace std;
 Server::Server(const string &serverAddress, const string &serverEmailPasswd,
                EmailServer *emailServerPtr)
     : address(serverAddress), emailPasswd(serverEmailPasswd),
-      emailServer(emailServerPtr), nextId(0) {}
+      emailServer(emailServerPtr), nextId(0) {
+  emailServer->addAddress(serverAddress, serverEmailPasswd);
+}
 Server::~Server() {}
 
 void Server::notifyUser(long long id, const string &subject,
