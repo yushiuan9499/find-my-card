@@ -47,10 +47,10 @@ Labeled_GPS Box::getGPSLocation() const {
 
 Json::Value *Box::dump2JSON() const {
   Json::Value *json = new Json::Value();
-  (*json)["gps"] = gps.dump2JSON();
+  (*json)["gps"] = *gps.dump2JSON();
   (*json)["cards"] = Json::Value(Json::arrayValue);
   for (const auto &pair : cards) {
-    (*json)["cards"].append(pair.second->dump2JSON());
+    (*json)["cards"].append(*pair.second->dump2JSON());
   }
   return json; // Return the JSON representation of the box
 }

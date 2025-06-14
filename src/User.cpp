@@ -91,7 +91,7 @@ Json::Value *User::dump2JSON() const {
   (*json)["cards"] = Json::Value(Json::arrayValue);
 
   for (const Card *card : cards) {
-    (*json)["cards"].append(card->dump2JSON());
+    (*json)["cards"].append(*card->dump2JSON());
   }
 
   return json; // Return the JSON representation of the user
