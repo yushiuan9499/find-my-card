@@ -1,11 +1,19 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "Core/JvTime.h"
 #include "Core/Labeled_GPS.h"
 #include <map>
 #include <string>
 
 class EmailServer;
+
+struct FindInfo {
+  JvTime time;             // Time when the card was found
+  Labeled_GPS gps;         // GPS location where the card was found
+  long long finderId = -1; // ID of the user who found the card
+  int reward = 0;          // Reward for finding the card
+};
 
 class Server {
 private:
@@ -15,8 +23,12 @@ private:
   std::map<long long, std::string> passwd;
   // user id -> email address mapping
   std::map<long long, std::string> emailAddr;
+  // user id -> reward balance mapping
+  std::map<long long, long long> rewardBalance;
   // card id -> owner id mapping
   std::map<std::string, long long> cardOwnerId;
+  // card id -> find info mapping
+  std::map<std::string, FindInfo> cardFindInfo;
   // Server's email address
   std::string address;
   // Server's email password
@@ -79,9 +91,32 @@ public:
   /**
    * @brief notify server a card found
    * @param id: the ID of card
+   * @param gps: the GPS location where the card is found
+   * @param username: the username of the user who found the card
    * @retval true if the process is successful, false if error occurs
    */
-  bool notifyCardFound(const std::string &id, const Labeled_GPS &gps) const;
+  bool notifyCardFound(const std::string &id, const Labeled_GPS &gps,
+                       const string &username = "", int reward = 0);
+  /**
+   * @brief notify server a card is retrieved
+   * @param id: the ID of card
+   * @return true if the process is successful, false if error occurs
+   */
+  bool notifyCardRetrieved(const std::string &id);
+
+  /**
+   * @brief Get the find info of a card
+   * @param id: the ID of the card
+   * @return FindInfo object containing the find information
+   */
+  const FindInfo *findInfo(const std::string &id) const;
+  /**
+   * @brief Get the balance of a user's reward
+   * @param username: the username of the user
+   * @param password: the pass word of the user
+   * @return the balance of the user if valid, otherwise -1
+   */
+  int getBalance(const string &username, const string &password) const;
 };
 
 #endif // SERVER_H

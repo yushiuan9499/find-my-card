@@ -13,7 +13,7 @@ private:
 protected:
 public:
   // 不應該有卡片沒ID，所以禁止使用無參數的建構子
-  Card(const std::string &cardId);
+  Card(const std::string &cardId, int balance = 0);
   Card(const Json::Value *arg_json_ptr);
   virtual ~Card();
   /**

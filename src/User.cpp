@@ -50,7 +50,7 @@ bool User::dropCard(Box *box, Card *card) {
   if (cards.find(card->getId()) == cards.end()) {
     return false; // Card not owned by the user
   }
-  Card *result = box->addCard(card);
+  Card *result = box->addCard(card, username);
   if (result == nullptr) {
     removeCard(card);
     return true;
@@ -73,17 +73,26 @@ bool User::dropCard(Box *box, const std::string &cardId) {
   return false; // Failed to add to the box
 }
 
-Card *User::retrieveCard(Box *box, const std::string &cardId) {
+Card *User::retrieveCard(Box *box, const std::string &cardId,
+                         const std::string &paymentCardId) {
   if (!box) {
     return nullptr; // Invalid box
   }
-  Card *card = box->retrieveCard(username, cardId, password);
+  Card *card =
+      box->retrieveCard(username, cardId, password, cards[paymentCardId]);
   assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
     addCard(card); // Add the card back to the user's collection
   }
   return card; // Return the retrieved card or nullptr if not found
+}
+
+int User::readReward() const {
+  if (server) {
+    return server->getBalance(username, password);
+  }
+  return 0; // Return 0 if server is not set
 }
 
 void User::readMail(int index) const {

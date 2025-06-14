@@ -27,17 +27,18 @@ public:
    * @return nullptr if the card add successfully
    *         otherwise, return the card itself
    */
-  Card *addCard(Card *card);
+  Card *addCard(Card *card, const string &username = "");
 
   /**
    * @brief retrieve a card from the box
    * @param usrName: the username of the user who wants to retrieve the card
    * @param cardId: the id of the card to be retrieved
    * @param passwd: the password of the user
+   * @param card: pointer to the card for payment
    * @return: pointer to the card if found, nullptr if not found or error occurs
    */
   Card *retrieveCard(const std::string &usrName, const std::string &cardId,
-                     const std::string &passwd);
+                     const std::string &passwd, Card *card = nullptr);
   /**
    * @brief get the GPS location of the box
    * @return: Labeled_GPS object representing the GPS location of the box

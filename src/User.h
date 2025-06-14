@@ -65,10 +65,18 @@ public:
    * @brief retrieve a card from a box
    * @param box: pointer to the box where the card will be retrieved from
    * @param cardId: the id of the card to be retrieved
+   * @param paymentCardId: the id of the card used for payment (optional)
    * @return pointer to the retrieved card if successful,
    *         otherwise nullptr
    */
-  Card *retrieveCard(Box *box, const std::string &cardId);
+  Card *retrieveCard(Box *box, const std::string &cardId,
+                     const std::string &paymentCardId = "");
+
+  /**
+   * @brief read the user's reward
+   * @return the reward amount
+   */
+  int readReward() const;
 
   /**
    * @brief get the card by its ID
