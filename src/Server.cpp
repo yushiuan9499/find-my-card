@@ -1,13 +1,16 @@
 #include "Server.h"
 #include "Core/Labeled_GPS.h"
 #include "EmailServer.h"
+#include "Env.h"
 #include <string>
 using namespace std;
 
 Server::Server(const string &serverAddress, const string &serverEmailPasswd,
                EmailServer *emailServerPtr)
     : address(serverAddress), emailPasswd(serverEmailPasswd),
-      emailServer(emailServerPtr), nextId(0) {}
+      emailServer(emailServerPtr), nextId(0) {
+  emailServer->addAddress(serverAddress, serverEmailPasswd);
+}
 Server::~Server() {}
 
 void Server::notifyUser(long long id, const string &subject,
@@ -63,12 +66,30 @@ bool Server::addCard(const string &usrName, const string &passwd,
   cardOwnerId[cardId] = id; // Map card ID to user ID
   return true;              // Card added successfully
 }
-bool Server::notifyCardFound(const string &cardId,
-                             const Labeled_GPS &gps) const {
+bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
+                             const string &username, int reward) {
+
+  // Check if the card ID exists in the mapping
   auto it = cardOwnerId.find(cardId);
   if (it == cardOwnerId.end()) {
     return false; // Card ID not found
   }
+
+  // Create a FindInfo object
+  FindInfo findInfo;
+
+  if (!username.empty()) {
+    if (auto userIt = usrId.find(username); userIt == usrId.end()) {
+      return false; // Error: Username not found
+    } else {
+      findInfo.finderId = userIt->second; // Set finder ID from username
+      findInfo.reward = reward;           // Set reward for finding the card
+    }
+  }
+  findInfo.gps = gps;            // Set GPS location where the card was found
+  findInfo.time = Env::getNow(); // Set the current time
+
+  // Notify the owner of the card
   long long ownerId = it->second;
   string body = "Your card with ID " + cardId +
                 " has been found at location: " + gps.label + "( " +
@@ -76,5 +97,63 @@ bool Server::notifyCardFound(const string &cardId,
                 " )."; // Create notification body with GPS info"
   notifyUser(ownerId, "Your Card is Found",
              body); // Notify the owner of the card
-  return true;      // Notification sent successfully
+
+  cardFindInfo[cardId] = findInfo;
+  return true; // Notification sent successfully
+}
+
+bool Server::notifyCardRetrieved(const string &cardId) {
+  // Check if the card ID exists in the mapping
+  auto findIt = cardFindInfo.find(cardId);
+  if (findIt == cardFindInfo.end()) {
+    return false; // Card ID not found
+  }
+
+  // Get the find info for the card
+  FindInfo &findInfo = findIt->second;
+
+  // Notify the owner of the card
+  notifyUser(cardOwnerId[cardId], "Your Card is Retrieved",
+             "Your card with ID " + cardId + " has been retrieved.");
+  if (findInfo.finderId != -1) {
+    // Notify the finder of the card if they are registered
+    notifyUser(
+        findInfo.finderId, "Card Retrieved",
+        "The card you found has been retrieved. Thank you for your help!");
+    rewardBalance[findInfo.finderId] += findInfo.reward; // Add reward
+  }
+
+  // Remove the find info for the card
+  cardFindInfo.erase(findIt);
+  return true; // Notification sent successfully
+}
+
+const FindInfo *Server::findInfo(const string &cardId) const {
+  auto it = cardFindInfo.find(cardId);
+  if (it == cardFindInfo.end()) {
+    return nullptr; // Card ID not found, return nullptr
+  }
+  return &it->second; // Return the find info for the card
+}
+int Server::getBalance(const string &username, const string &password) const {
+  if (!checkUser(username, password)) {
+    return -1;
+  }
+  return rewardBalance.at(usrId.at(username)); // Return the user's balance
+}
+
+int Server::redeemReward(const string &username, const string &password,
+                         int amount) {
+  if (!checkUser(username, password)) {
+    return -1; // User does not exist or password does not match
+  }
+  long long userId = usrId[username];
+  if (amount < 0) {
+    amount = rewardBalance[userId]; // Redeem all available rewards
+  }
+  if (rewardBalance[userId] < amount) {
+    return -1; // Not enough balance to redeem
+  }
+  rewardBalance[userId] -= amount; // Deduct the redeemed amount
+  return amount;                   // Return the remaining balance
 }

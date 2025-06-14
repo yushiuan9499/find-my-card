@@ -6,7 +6,12 @@
     "emailPassword": "yEmailPassword123",
     "cards": [
       {
-        "id": "31415926535"
+        "id": "31415926535",
+        "balance": 1000
+      },
+      {
+        "id": "998244353",
+        "balance": 100
       }
     ]
   },
@@ -17,7 +22,12 @@
     "emailPassword": "tEmailPassword123",
     "cards": [
       {
-        "id": "27182818284"
+        "id": "27182818284",
+        "balance": 500
+      },
+      {
+        "id": "12345678901",
+        "balance": 200
       }
     ]
   },
