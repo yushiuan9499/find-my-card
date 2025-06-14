@@ -2,6 +2,7 @@
 #define USER_H
 
 #include "Core/Core.h"
+#include <map>
 #include <set>
 #include <string>
 
@@ -16,7 +17,7 @@ private:
   std::string emailPassword;
   std::string password; // Password for the user
   std::string email;
-  std::set<Card *> cards;   // Cards owned by the user
+  std::map<std::string, Card *> cards; // id -> card owned by the user
   EmailServer *emailServer; // Pointer to the email server for communication
   Server *server;           // Pointer to the server for user management
 
@@ -39,6 +40,12 @@ public:
    */
   void removeCard(Card *card);
   /**
+   * @brief remove card by id
+   * @param id: the id of the card to be removed
+   * @return pointer to the removed card if successful,
+   */
+  Card *removeCard(const std::string &id);
+  /**
    * @brief drop a card into a box
    * @param box: pointer to the box where the card will be dropped
    * @param card: pointer to the card to be dropped
@@ -47,6 +54,14 @@ public:
    */
   bool dropCard(Box *box, Card *card);
   /**
+   * @brief drop a card into a box by its ID
+   * @param box: pointer to the box where the card will be dropped
+   * @param cardId: the id of the card to be dropped
+   * @retval true: the card is dropped successfully
+   *        false: otherwise
+   */
+  bool dropCard(Box *box, const std::string &cardId);
+  /**
    * @brief retrieve a card from a box
    * @param box: pointer to the box where the card will be retrieved from
    * @param cardId: the id of the card to be retrieved
@@ -54,6 +69,13 @@ public:
    *         otherwise nullptr
    */
   Card *retrieveCard(Box *box, const std::string &cardId);
+
+  /**
+   * @brief get the card by its ID
+   * @param cardId: the ID of the card to be retrieved
+   * @return pointer to the card if found, otherwise nullptr
+   */
+  const Card *getCard(const std::string &cardId) const;
   /**
    * @brief read the mail by index
    * @param index: the index of the mail to be read
