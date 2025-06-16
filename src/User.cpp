@@ -15,7 +15,12 @@ User::User(Server *server, const string &usrName, const string &passwd,
   this->server->addUser(usrName, passwd, emailAddr);
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
-User::User(Json::Value *arg_json_ptr) { JSON2Object(arg_json_ptr); }
+User::User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr)
+    : server(server), emailServer(emailServer) {
+  JSON2Object(arg_json_ptr);
+  this->server->addUser(username, password, email);
+  this->emailServer->addAddress(email, emailPassword);
+}
 User::~User() {
   for (auto card : cards) {
     delete card.second; // Clean up dynamically allocated cards
@@ -28,6 +33,16 @@ void User::addCard(Card *card) {
   }
 }
 
+bool User::addCardToServer(const std::string &id) {
+  if (server && !id.empty()) {
+    if (cards.find(id) == cards.end()) {
+      return false; // Card not exists in the user's collection
+    }
+    return server->addCard(username, password, id);
+  }
+  return false; // Failed to add card to the server or server not set
+}
+
 void User::removeCard(Card *card) {
   if (card) {
     cards.erase(card->getId());
@@ -37,8 +52,9 @@ void User::removeCard(Card *card) {
 Card *User::removeCard(const std::string &id) {
   auto it = cards.find(id);
   if (it != cards.end()) {
-    cards.erase(it);   // Remove the card from the collection
-    return it->second; // Return the removed card
+    auto card = it->second; // Get the card pointer
+    cards.erase(it);        // Remove the card from the collection
+    return card;
   }
   return nullptr; // Card not found
 }
@@ -50,7 +66,7 @@ bool User::dropCard(Box *box, Card *card) {
   if (cards.find(card->getId()) == cards.end()) {
     return false; // Card not owned by the user
   }
-  Card *result = box->addCard(card);
+  Card *result = box->addCard(card, username);
   if (result == nullptr) {
     removeCard(card);
     return true;
@@ -73,11 +89,13 @@ bool User::dropCard(Box *box, const std::string &cardId) {
   return false; // Failed to add to the box
 }
 
-Card *User::retrieveCard(Box *box, const std::string &cardId) {
+Card *User::retrieveCard(Box *box, const std::string &cardId,
+                         const std::string &paymentCardId) {
   if (!box) {
     return nullptr; // Invalid box
   }
-  Card *card = box->retrieveCard(username, cardId, password);
+  Card *card =
+      box->retrieveCard(username, cardId, password, cards[paymentCardId]);
   assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
@@ -86,10 +104,32 @@ Card *User::retrieveCard(Box *box, const std::string &cardId) {
   return card; // Return the retrieved card or nullptr if not found
 }
 
+int User::redeemReward(Box *box, const std::string &cardId, int amount) {
+  if (!box || cardId.empty()) {
+    return -1; // Invalid box or card ID
+  }
+  Card *paymentCard = cards[cardId];
+  if (!paymentCard) {
+    return -1; // Payment card not found
+  }
+  int reward = box->redeemReward(username, password, amount, paymentCard);
+  if (reward < 0) {
+    return -1; // Redemption failed
+  }
+  return reward; // Return the remaining balance after redemption
+}
+
+int User::readReward() const {
+  if (server) {
+    return server->getBalance(username, password);
+  }
+  return 0; // Return 0 if server is not set
+}
+
 void User::readMail(int index) const {
   if (emailServer) {
     const Email *email =
-        emailServer->getEmailById(username, emailPassword, index);
+        emailServer->getEmailById(this->email, emailPassword, index);
     cout << "Reading email #" << index << ":" << "\n";
     cout << "Subject: " << email->subject << "\n";
     cout << "Body: " << email->body << "\n";

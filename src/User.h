@@ -26,7 +26,7 @@ public:
   User(Server *server, const std::string &usrName, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
-  User(Json::Value *arg_json_ptr);
+  User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr);
   virtual ~User();
 
   /**
@@ -34,6 +34,13 @@ public:
    * @param card: pointer to the card to be added
    */
   void addCard(Card *card);
+  /**
+   * @brief add the card to server
+   * @param id: the id of the card to be added
+   * @return true if the card is added successfully,
+   *        false if the card already exists or the server is not set
+   */
+  bool addCardToServer(const std::string &id);
   /**
    * @brief remove a card from the user's collection
    * @param card: pointer to the card to be removed
@@ -65,10 +72,27 @@ public:
    * @brief retrieve a card from a box
    * @param box: pointer to the box where the card will be retrieved from
    * @param cardId: the id of the card to be retrieved
+   * @param paymentCardId: the id of the card used for payment (optional)
    * @return pointer to the retrieved card if successful,
    *         otherwise nullptr
    */
-  Card *retrieveCard(Box *box, const std::string &cardId);
+  Card *retrieveCard(Box *box, const std::string &cardId,
+                     const std::string &paymentCardId = "");
+
+  /**
+   * @brief redeem a reward for the user
+   * @param box: pointer to the box where the reward will be redeemed
+   * @param cardId: the id of the card used for payment
+   * @param amount: the amount of reward to redeem, -1 for all available
+   * @return the reward balance after redemption,
+   *        or -1 if the user is invalid or the card is not found
+   */
+  int redeemReward(Box *box, const std::string &cardId, int amount = -1);
+  /**
+   * @brief read the user's reward
+   * @return the reward amount
+   */
+  int readReward() const;
 
   /**
    * @brief get the card by its ID

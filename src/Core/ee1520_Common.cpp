@@ -152,6 +152,7 @@ char *myFile2String(char *f_name) {
 
   // allocate memory to contain the whole file:
   char *result_ptr = (char *)malloc(sizeof(char) * (lSize + 1));
+  bzero(result_ptr, sizeof(char) * (lSize + 1));
   // copy the file into the buffer:
   lresult = fread(result_ptr, 1, lSize, f_ptr);
   fclose(f_ptr);
@@ -178,6 +179,7 @@ int myFile2JSON(char *f_name, Json::Value *jv_ptr) {
   char *json_str = myFile2String(f_name);
   std::cout << f_name << std::endl;
   std::cout << ((void *)json_str) << std::endl;
+  std::cout << json_str << std::endl;
   std::cout << (jv_ptr) << std::endl;
 
   if (json_str == NULL) {
