@@ -22,6 +22,8 @@ int main() {
   User tobiichi3227{&server, &emailServer, &scenarioJson["tobiichi3227"]};
   Box box1{&server, &scenarioJson["box1"]};
 
+  yushiuan9499.setVerificationType(UserInfo::APP);
+
   // Add the card to the server
   yushiuan9499.addCardToServer(string("31415926535"));
 

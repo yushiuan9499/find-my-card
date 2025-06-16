@@ -1,5 +1,6 @@
 #include "Server.h"
 #include "Core/Labeled_GPS.h"
+#include "Core/utils.h"
 #include "EmailServer.h"
 #include "Env.h"
 #include <random>
@@ -51,6 +52,16 @@ bool Server::removeUser(const string &username, const string &passwd) {
   userId.erase(it);
   this->userInfo.erase(id);
   return true; // User removed successfully
+}
+
+bool Server::setVerificationType(const string &username, const string &passwd,
+                                 UserInfo::VerificationType type) {
+  if (!checkUser(username, passwd)) {
+    return false; // User does not exist or password does not match
+  }
+  long long id = userId[username];
+  this->userInfo[id].verificationType = type; // Set the verification type
+  return true; // Verification type set successfully
 }
 
 bool Server::checkUser(const string &username, const string &passwd) const {
@@ -137,6 +148,13 @@ bool Server::notifyCardRetrieved(const string &cardId, int verificationCode) {
   if (userInfo[ownerId].verificationType == UserInfo::EMAIL &&
       findInfo.verificationCode != verificationCode) {
     return false; // Verification code does not match
+  } else if (userInfo[ownerId].verificationType == UserInfo::APP) {
+    long long correctCode = Utils::generateVerificationCode(
+
+        secret2FA[userInfo[ownerId].id], mktime(Env::getNow().getStdTM()));
+    if (correctCode != verificationCode) {
+      return false; // No finder ID available for app verification
+    }
   }
 
   // Notify the owner of the card
@@ -183,4 +201,24 @@ int Server::redeemReward(const string &username, const string &password,
   }
   rewardBalance[id] -= amount; // Deduct the redeemed amount
   return amount;               // Return the remaining balance
+}
+
+pair<long long, long long> Server::setup2FA(const string &username) {
+  // Generate a random verification code
+  static bool seeded = false;
+  if (!seeded) {
+    srand(time(nullptr)); // Seed the random number generator
+    seeded = true;
+  }
+  if (userId.find(username) == userId.end()) {
+    return make_pair(-1, -1); // User does not exist
+  }
+  if (userInfo[userId[username]].verificationType != UserInfo::APP) {
+    return make_pair(-1, -1); // 2FA is not set up for this user
+  }
+  long long id = secret2FA.size();       // Use the index as the ID for 2FA
+  userInfo[userId[username]].id = id;    // Set the ID in user info
+  long long secret = rand() % 100000000; // Random 8-digit code
+  secret2FA.push_back(secret);
+  return make_pair(id, secret); // Return the ID and secret key
 }

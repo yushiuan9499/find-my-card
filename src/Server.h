@@ -24,6 +24,7 @@ struct UserInfo {
   std::string passwd;                        // Password of the user
   std::string email;                         // Email address of the user
   VerificationType verificationType = EMAIL; // Type of verification used
+  long long id = -1;                         // User ID, -1 if not set
 };
 
 class Server {
@@ -38,6 +39,7 @@ private:
   std::map<std::string, long long> cardOwnerId;
   // card id -> find info mapping
   std::map<std::string, FindInfo> cardFindInfo;
+  std::vector<long long> secret2FA; // Verification codes for cards
   // Server's email address
   std::string address;
   // Server's email password
@@ -90,6 +92,17 @@ public:
    * @return true if the username and password match, false otherwise
    */
   bool checkUser(const std::string &username, const std::string &passwd) const;
+  /**
+   * @brief Set the verification type for a user
+   * @param username: the username of the user
+   * @param passwd: the password of the user
+   * @param type: the verification type to be set
+   * @return true if the verification type is set successfully, false if the
+   * user does not exist or the password does not match
+   */
+  bool setVerificationType(const std::string &username,
+                           const std::string &passwd,
+                           UserInfo::VerificationType type);
 
   /**
    * @brief Add a card to the server
@@ -140,6 +153,13 @@ public:
    */
   int redeemReward(const std::string &username, const std::string &password,
                    int amount);
+  /**
+   * @brief Setup 2FA
+   * @param username: the username of the user
+   * @return pair<id, secret> where id is the id for the 2FA and secret is the
+   * secret key, otherwise pair(-1, -1) if error occurs
+   */
+  std::pair<long long, long long> setup2FA(const std::string &username);
 };
 
 #endif // SERVER_H
