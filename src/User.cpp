@@ -10,17 +10,19 @@ using namespace std;
 User::User(Server *server, const string &usrName, const string &passwd,
            EmailServer *emailServer, const string &emailAddr,
            const string &emailPasswd)
-    : server(server), username(usrName), password(passwd), email(emailAddr),
-      emailPassword(emailPasswd), emailServer(emailServer) {
+    : server(server), username(usrName), passwd(passwd), email(emailAddr),
+      emailPasswd(emailPasswd), emailServer(emailServer) {
   this->server->addUser(usrName, passwd, emailAddr);
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
+
 User::User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr)
     : server(server), emailServer(emailServer) {
   JSON2Object(arg_json_ptr);
-  this->server->addUser(username, password, email);
-  this->emailServer->addAddress(email, emailPassword);
+  this->server->addUser(username, passwd, email);
+  this->emailServer->addAddress(email, emailPasswd);
 }
+
 User::~User() {
   for (auto card : cards) {
     delete card.second; // Clean up dynamically allocated cards
@@ -38,7 +40,7 @@ bool User::addCardToServer(const std::string &id) {
     if (cards.find(id) == cards.end()) {
       return false; // Card not exists in the user's collection
     }
-    return server->addCard(username, password, id);
+    return server->addCard(username, passwd, id);
   }
   return false; // Failed to add card to the server or server not set
 }
@@ -73,6 +75,7 @@ bool User::dropCard(Box *box, Card *card) {
   }
   return false; // Failed to add to the box
 }
+
 bool User::dropCard(Box *box, const std::string &cardId) {
   if (!box || cardId.empty()) {
     return false; // Invalid box or card ID
@@ -95,7 +98,7 @@ Card *User::retrieveCard(Box *box, const std::string &cardId,
     return nullptr; // Invalid box
   }
   Card *card =
-      box->retrieveCard(username, cardId, password, cards[paymentCardId]);
+      box->retrieveCard(username, cardId, passwd, cards[paymentCardId]);
   assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
@@ -112,7 +115,7 @@ int User::redeemReward(Box *box, const std::string &cardId, int amount) {
   if (!paymentCard) {
     return -1; // Payment card not found
   }
-  int reward = box->redeemReward(username, password, amount, paymentCard);
+  int reward = box->redeemReward(username, passwd, amount, paymentCard);
   if (reward < 0) {
     return -1; // Redemption failed
   }
@@ -121,7 +124,7 @@ int User::redeemReward(Box *box, const std::string &cardId, int amount) {
 
 int User::readReward() const {
   if (server) {
-    return server->getBalance(username, password);
+    return server->getBalance(username, passwd);
   }
   return 0; // Return 0 if server is not set
 }
@@ -129,7 +132,7 @@ int User::readReward() const {
 void User::readMail(int index) const {
   if (emailServer) {
     const Email *email =
-        emailServer->getEmailById(this->email, emailPassword, index);
+        emailServer->getEmailById(this->email, emailPasswd, index);
     cout << "Reading email #" << index << ":" << "\n";
     cout << "Subject: " << email->subject << "\n";
     cout << "Body: " << email->body << "\n";
@@ -141,7 +144,7 @@ void User::readMail(int index) const {
 
 set<long long> User::getEmailIds() const {
   if (emailServer) {
-    return emailServer->getEmails(username, emailPassword);
+    return emailServer->getEmails(username, emailPasswd);
   }
   return {}; // Return an empty set if email server is not set
 }
@@ -150,8 +153,8 @@ Json::Value *User::dump2JSON() const {
   Json::Value *json = new Json::Value();
   (*json)["username"] = username;
   (*json)["email"] = email;
-  (*json)["emailPassword"] = emailPassword;
-  (*json)["password"] = password;
+  (*json)["emailPassword"] = emailPasswd;
+  (*json)["password"] = passwd;
   (*json)["cards"] = Json::Value(Json::arrayValue);
 
   for (auto card : cards) {
@@ -178,11 +181,11 @@ void User::JSON2Object(Json::Value *arg_json_ptr) {
   }
   if (!hasException(String, (*arg_json_ptr)["emailPassword"], lv_exception_ptr,
                     EE1520_ERROR_JSON2OBJECT_USER, "emailPassword")) {
-    this->emailPassword = (*arg_json_ptr)["emailPassword"].asString();
+    this->emailPasswd = (*arg_json_ptr)["emailPassword"].asString();
   }
   if (!hasException(String, (*arg_json_ptr)["password"], lv_exception_ptr,
                     EE1520_ERROR_JSON2OBJECT_USER, "password")) {
-    this->password = (*arg_json_ptr)["password"].asString();
+    this->passwd = (*arg_json_ptr)["password"].asString();
   }
 
   if (!hasException(Array, (*arg_json_ptr)["cards"], lv_exception_ptr,

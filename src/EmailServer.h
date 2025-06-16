@@ -93,7 +93,7 @@ public:
    * @param emailId: ID of the email to retrieve
    * @return pointer to the Email object if found, nullptr if not found or error
    */
-  Email const *getEmailById(const std::string &address,
+  const Email *getEmailById(const std::string &address,
                             const std::string &passwd, long long emailId) const;
   /**
    * @brief Delete an email by ID

@@ -100,7 +100,7 @@ const set<long long> EmailServer::getEmails(const string &address,
   return emailIds; // Return set of email IDs
 }
 
-Email const *EmailServer::getEmailById(const string &address,
+const Email *EmailServer::getEmailById(const string &address,
                                        const string &passwd,
                                        long long emailId) const {
   if (!checkPasswd(address, passwd)) {

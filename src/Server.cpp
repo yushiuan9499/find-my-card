@@ -26,46 +26,50 @@ void Server::notifyUser(long long id, const string &subject,
   }
 }
 
-bool Server::addUser(const string &usrName, const string &passwd,
+bool Server::addUser(const string &username, const string &passwd,
                      const string &emailAddr) {
-  if (usrId.find(usrName) != usrId.end() || emailAddr.empty()) {
+  if (userId.find(username) != userId.end() || emailAddr.empty()) {
     return false; // Username already exists or invalid email address
   }
   long long id = nextId++;
-  usrId[usrName] = id;
+  userId[username] = id;
   this->passwd[id] = passwd;
   this->emailAddr[id] = emailAddr;
   return true; // User added successfully
 }
-bool Server::removeUser(const string &usrName, const string &passwd) {
-  if (!checkUser(usrName, passwd)) {
+
+bool Server::removeUser(const string &username, const string &passwd) {
+  if (!checkUser(username, passwd)) {
     return false; // Password does not match
   }
-  auto it = usrId.find(usrName);
-  long long id = usrId[usrName];
-  usrId.erase(it);
+  auto it = userId.find(username);
+  long long id = userId[username];
+  userId.erase(it);
   this->passwd.erase(id);
   emailAddr.erase(id); // Remove email address mapping
   return true;         // User removed successfully
 }
-bool Server::checkUser(const string &usrName, const string &passwd) const {
-  auto it = usrId.find(usrName);
-  if (it == usrId.end()) {
+
+bool Server::checkUser(const string &username, const string &passwd) const {
+  auto it = userId.find(username);
+  if (it == userId.end()) {
     return false; // Username not found
   }
   long long id = it->second;
   auto passwdIt = this->passwd.find(id);
   return passwdIt != this->passwd.end() && passwdIt->second == passwd;
 }
-bool Server::addCard(const string &usrName, const string &passwd,
+
+bool Server::addCard(const string &username, const string &passwd,
                      const string &cardId) {
-  if (!checkUser(usrName, passwd)) {
+  if (!checkUser(username, passwd)) {
     return false; // User does not exist or password does not match
   }
-  long long id = usrId[usrName];
+  long long id = userId[username];
   cardOwnerId[cardId] = id; // Map card ID to user ID
   return true;              // Card added successfully
 }
+
 bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
                              const string &username, int reward) {
 
@@ -79,7 +83,7 @@ bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
   FindInfo findInfo;
 
   if (!username.empty()) {
-    if (auto userIt = usrId.find(username); userIt == usrId.end()) {
+    if (auto userIt = userId.find(username); userIt == userId.end()) {
       return false; // Error: Username not found
     } else {
       findInfo.finderId = userIt->second; // Set finder ID from username
@@ -139,7 +143,7 @@ int Server::getBalance(const string &username, const string &password) const {
   if (!checkUser(username, password)) {
     return -1;
   }
-  return rewardBalance.at(usrId.at(username)); // Return the user's balance
+  return rewardBalance.at(userId.at(username)); // Return the user's balance
 }
 
 int Server::redeemReward(const string &username, const string &password,
@@ -147,13 +151,13 @@ int Server::redeemReward(const string &username, const string &password,
   if (!checkUser(username, password)) {
     return -1; // User does not exist or password does not match
   }
-  long long userId = usrId[username];
+  long long id = userId[username];
   if (amount < 0) {
-    amount = rewardBalance[userId]; // Redeem all available rewards
+    amount = rewardBalance[id]; // Redeem all available rewards
   }
-  if (rewardBalance[userId] < amount) {
+  if (rewardBalance[id] < amount) {
     return -1; // Not enough balance to redeem
   }
-  rewardBalance[userId] -= amount; // Deduct the redeemed amount
-  return amount;                   // Return the remaining balance
+  rewardBalance[id] -= amount; // Deduct the redeemed amount
+  return amount;               // Return the remaining balance
 }

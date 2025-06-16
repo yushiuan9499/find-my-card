@@ -31,13 +31,13 @@ public:
 
   /**
    * @brief retrieve a card from the box
-   * @param usrName: the username of the user who wants to retrieve the card
+   * @param username: the username of the user who wants to retrieve the card
    * @param cardId: the id of the card to be retrieved
    * @param passwd: the password of the user
    * @param card: pointer to the card for payment
    * @return: pointer to the card if found, nullptr if not found or error occurs
    */
-  Card *retrieveCard(const std::string &usrName, const std::string &cardId,
+  Card *retrieveCard(const std::string &username, const std::string &cardId,
                      const std::string &passwd, Card *card = nullptr);
   /**
    * @brief get the GPS location of the box
@@ -48,12 +48,12 @@ public:
   /**
    * @brief redeem a reward for a user
    * @param username: the username of the user
-   * @param password: the password of the user
+   * @param passwd: the password of the user
    * @param amount: the amount of reward to redeem, -1 for all available
    * @param card: pointer to the card for payment, if any
    * @return the reward balance after redemption, or -1 if the user is invalid
    */
-  int redeemReward(const std::string &username, const std::string &password,
+  int redeemReward(const std::string &username, const std::string &passwd,
                    int amount, Card *card);
 
   virtual Json::Value *dump2JSON(void) const override;

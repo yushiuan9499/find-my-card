@@ -7,9 +7,11 @@
 using namespace std;
 Box::Box(Server *server, const Labeled_GPS &gpsLocation)
     : server(server), gps(gpsLocation) {}
+
 Box::Box(Server *server, Json::Value *arg_json_ptr) : server(server) {
   JSON2Object(arg_json_ptr);
 }
+
 Box::~Box() {
   // Clean up the cards in the box
   for (auto &pair : cards) {
@@ -17,6 +19,7 @@ Box::~Box() {
   }
   cards.clear();
 }
+
 Card *Box::addCard(Card *card, const string &username) {
   if (card == nullptr) {
     return card; // Return the card itself if it's null
@@ -32,10 +35,10 @@ Card *Box::addCard(Card *card, const string &username) {
   return nullptr;              // Card added successfully
 }
 
-Card *Box::retrieveCard(const std::string &usrName, const std::string &cardId,
+Card *Box::retrieveCard(const std::string &username, const std::string &cardId,
                         const std::string &passwd, Card *paymentCard) {
   // Check if the user is authenticated
-  if (!server->checkUser(usrName, passwd)) {
+  if (!server->checkUser(username, passwd)) {
     return nullptr; // Authentication failed
   }
 
@@ -62,12 +65,12 @@ Labeled_GPS Box::getGPSLocation() const {
   return gps; // Return the GPS location of the box
 }
 
-int Box::redeemReward(const std::string &username, const std::string &password,
+int Box::redeemReward(const std::string &username, const std::string &passwd,
                       int amount, Card *card) {
   if (card == nullptr) {
     return -1; // No card provided for payment
   }
-  int ret = server->redeemReward(username, password, amount);
+  int ret = server->redeemReward(username, passwd, amount);
   if (ret < 0) {
     return -1; // Redemption failed
   }

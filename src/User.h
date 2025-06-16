@@ -14,8 +14,8 @@ class Server;
 class User : public Core {
 private:
   std::string username;
-  std::string emailPassword;
-  std::string password; // Password for the user
+  std::string emailPasswd;
+  std::string passwd; // Password for the user
   std::string email;
   std::map<std::string, Card *> cards; // id -> card owned by the user
   EmailServer *emailServer; // Pointer to the email server for communication
@@ -23,7 +23,7 @@ private:
 
 protected:
 public:
-  User(Server *server, const std::string &usrName, const std::string &passwd,
+  User(Server *server, const std::string &username, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
   User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr);

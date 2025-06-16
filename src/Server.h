@@ -18,7 +18,7 @@ struct FindInfo {
 class Server {
 private:
   // username -> user id mapping
-  std::map<std::string, long long> usrId;
+  std::map<std::string, long long> userId;
   // user id -> password mapping
   std::map<long long, std::string> passwd;
   // user id -> email address mapping
@@ -54,29 +54,29 @@ public:
 
   /**
    * @brief Add a user to the server with username and password
-   * @param usrName: the username of the user
+   * @param username: the username of the user
    * @param passwd: the password of the user
    * @param emailAddr: the email address of the user
    * @retval true: the user is added successfully
    *         false: the username already exists or the email address is invalid
    */
-  bool addUser(const std::string &usrName, const std::string &passwd,
+  bool addUser(const std::string &username, const std::string &passwd,
                const std::string &emailAddr);
   /**
    * @brief Remove a user from the server
-   * @param usrName: the username of the user to be removed
+   * @param username: the username of the user to be removed
    * @param passwd: the password of the user to be removed
    * @return true if the user is removed successfully, false if the username
    * does not exist or the password does not match
    */
-  bool removeUser(const std::string &usrName, const std::string &passwd);
+  bool removeUser(const std::string &username, const std::string &passwd);
   /**
    * @brief Check if the username and password match
-   * @param usrName: the username of the user
+   * @param username: the username of the user
    * @param passwd: the password of the user
    * @return true if the username and password match, false otherwise
    */
-  bool checkUser(const std::string &usrName, const std::string &passwd) const;
+  bool checkUser(const std::string &username, const std::string &passwd) const;
 
   /**
    * @brief Add a card to the server
