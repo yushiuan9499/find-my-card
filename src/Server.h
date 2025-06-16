@@ -15,14 +15,17 @@ struct FindInfo {
   int reward = 0;          // Reward for finding the card
 };
 
+struct UserInfo {
+  std::string passwd; // Password of the user
+  std::string email;  // Email address of the user
+};
+
 class Server {
 private:
   // username -> user id mapping
   std::map<std::string, long long> userId;
-  // user id -> password mapping
-  std::map<long long, std::string> passwd;
-  // user id -> email address mapping
-  std::map<long long, std::string> emailAddr;
+  // user id -> user info mapping
+  std::map<long long, UserInfo> userInfo;
   // user id -> reward balance mapping
   std::map<long long, long long> rewardBalance;
   // card id -> owner id mapping

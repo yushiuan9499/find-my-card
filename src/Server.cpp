@@ -15,8 +15,8 @@ Server::~Server() {}
 
 void Server::notifyUser(long long id, const string &subject,
                         const string &body) const {
-  if (auto it = emailAddr.find(id); it != emailAddr.end()) {
-    string userAddr = it->second;
+  if (auto it = userInfo.find(id); it != userInfo.end()) {
+    string userAddr = it->second.email;
     Email email;
     email.subject = subject;
     email.body = body;
@@ -33,8 +33,8 @@ bool Server::addUser(const string &username, const string &passwd,
   }
   long long id = nextId++;
   userId[username] = id;
-  this->passwd[id] = passwd;
-  this->emailAddr[id] = emailAddr;
+  this->userInfo[id].passwd = passwd;
+  this->userInfo[id].email = emailAddr;
   return true; // User added successfully
 }
 
@@ -45,9 +45,8 @@ bool Server::removeUser(const string &username, const string &passwd) {
   auto it = userId.find(username);
   long long id = userId[username];
   userId.erase(it);
-  this->passwd.erase(id);
-  emailAddr.erase(id); // Remove email address mapping
-  return true;         // User removed successfully
+  this->userInfo.erase(id);
+  return true; // User removed successfully
 }
 
 bool Server::checkUser(const string &username, const string &passwd) const {
@@ -56,8 +55,8 @@ bool Server::checkUser(const string &username, const string &passwd) const {
     return false; // Username not found
   }
   long long id = it->second;
-  auto passwdIt = this->passwd.find(id);
-  return passwdIt != this->passwd.end() && passwdIt->second == passwd;
+  auto userIt = this->userInfo.find(id);
+  return userIt != this->userInfo.end() && userIt->second.passwd == passwd;
 }
 
 bool Server::addCard(const string &username, const string &passwd,
