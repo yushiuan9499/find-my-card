@@ -1,4 +1,5 @@
 #include "EmailServer.h"
+#include "Env.h"
 using namespace std;
 
 EmailServer::EmailServer() : nextId(0) {}
@@ -70,6 +71,7 @@ EmailError EmailServer::sendEmail(const Email &email, const string &passwd) {
   // Create a new email object
   long long emailId = emailIdCounter[participantId]++;
   Email *newEmail = new Email(email);
+  newEmail->time = Env::getNow(); // Set the current time
 
   // Store the email in the sender's email map
   emails[participantId][emailId] = newEmail;

@@ -2,6 +2,7 @@
 #define USER_H
 
 #include "Core/Core.h"
+#include "Server.h"
 #include <map>
 #include <set>
 #include <string>
@@ -9,7 +10,6 @@
 class Card;
 class Box;
 class EmailServer;
-class Server;
 
 class User : public Core {
 private:
@@ -18,9 +18,12 @@ private:
   std::string passwd; // Password for the user
   std::string email;
   std::map<std::string, Card *> cards; // id -> card owned by the user
+  std::map<std::string, int>
+      verificationCodes;    // id -> verification code for the card
   EmailServer *emailServer; // Pointer to the email server for communication
   Server *server;           // Pointer to the server for user management
-
+  UserInfo::VerificationType verificationType =
+      UserInfo::EMAIL; // Type of verification used
 protected:
 public:
   User(Server *server, const std::string &username, const std::string &passwd,
@@ -104,7 +107,7 @@ public:
    * @brief read the mail by index
    * @param index: the index of the mail to be read
    */
-  void readMail(int index) const;
+  void readMail(int index);
   /**
    * @brief get all email IDs associated with the user
    */

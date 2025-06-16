@@ -9,15 +9,21 @@
 class EmailServer;
 
 struct FindInfo {
-  JvTime time;             // Time when the card was found
-  Labeled_GPS gps;         // GPS location where the card was found
-  long long finderId = -1; // ID of the user who found the card
-  int reward = 0;          // Reward for finding the card
+  JvTime time;               // Time when the card was found
+  Labeled_GPS gps;           // GPS location where the card was found
+  long long finderId = -1;   // ID of the user who found the card
+  int reward = 0;            // Reward for finding the card
+  int verificationCode = -1; // Verification code for the finder
 };
 
 struct UserInfo {
-  std::string passwd; // Password of the user
-  std::string email;  // Email address of the user
+  enum VerificationType : uint8_t {
+    EMAIL, // Email verification
+    APP,   // App 2FA verification
+  };
+  std::string passwd;                        // Password of the user
+  std::string email;                         // Email address of the user
+  VerificationType verificationType = EMAIL; // Type of verification used
 };
 
 class Server {
@@ -45,9 +51,13 @@ private:
    * @param id: the id of the user
    * @param subject: the subject of the email
    * @param body: the body to be sent to the user
+   * @param cardId: the card ID if applicable, "" if not
+   * @param verificationCode: the verification code to be sent to the user
    */
+  // TODO: make arguments shorter
   void notifyUser(long long id, const std::string &subject,
-                  const std::string &body) const;
+                  const std::string &body, const std::string &cardId = "",
+                  int verificationCode = -1) const;
 
 protected:
 public:
@@ -103,9 +113,10 @@ public:
   /**
    * @brief notify server a card is retrieved
    * @param id: the ID of card
+   * @param verificationCode: the verification code for the card retrieval
    * @return true if the process is successful, false if error occurs
    */
-  bool notifyCardRetrieved(const std::string &id);
+  bool notifyCardRetrieved(const std::string &id, int verificationCode);
 
   /**
    * @brief Get the find info of a card

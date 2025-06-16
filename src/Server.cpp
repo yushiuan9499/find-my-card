@@ -2,7 +2,9 @@
 #include "Core/Labeled_GPS.h"
 #include "EmailServer.h"
 #include "Env.h"
+#include <random>
 #include <string>
+#include <time.h>
 using namespace std;
 
 Server::Server(const string &serverAddress, const string &serverEmailPasswd,
@@ -13,8 +15,8 @@ Server::Server(const string &serverAddress, const string &serverEmailPasswd,
 }
 Server::~Server() {}
 
-void Server::notifyUser(long long id, const string &subject,
-                        const string &body) const {
+void Server::notifyUser(long long id, const string &subject, const string &body,
+                        const string &cardId, int verificationCode) const {
   if (auto it = userInfo.find(id); it != userInfo.end()) {
     string userAddr = it->second.email;
     Email email;
@@ -22,6 +24,8 @@ void Server::notifyUser(long long id, const string &subject,
     email.body = body;
     email.sender = address;
     email.recipient = userAddr;
+    email.cardId = cardId; // Set the card ID if applicable
+    email.verificationCode = verificationCode;
     emailServer->sendEmail(email, emailPasswd);
   }
 }
@@ -71,6 +75,11 @@ bool Server::addCard(const string &username, const string &passwd,
 
 bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
                              const string &username, int reward) {
+  static bool seeded = false;
+  if (!seeded) {
+    srand(time(nullptr)); // Seed the random number generator
+    seeded = true;
+  }
 
   // Check if the card ID exists in the mapping
   auto it = cardOwnerId.find(cardId);
@@ -98,14 +107,23 @@ bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
                 " has been found at location: " + gps.label + "( " +
                 to_string(gps.latitude) + ", " + to_string(gps.longitude) +
                 " )."; // Create notification body with GPS info"
-  notifyUser(ownerId, "Your Card is Found",
-             body); // Notify the owner of the card
+  // Notify the owner of the card
+  if (userInfo[ownerId].verificationType == UserInfo::EMAIL) {
+    // Generate a random verification code
+    int verificationCode = rand() % 1000000; // Random 6-digit code
+    body += "\nVerification Code: " + to_string(verificationCode) +
+            ". Please use this code to verify the card retrieval.";
+    findInfo.verificationCode = verificationCode; // Set verification code
+    notifyUser(ownerId, "Your Card is Found", body, cardId, verificationCode);
+  } else {
+    notifyUser(ownerId, "Your Card is Found", body, cardId);
+  }
 
   cardFindInfo[cardId] = findInfo;
   return true; // Notification sent successfully
 }
 
-bool Server::notifyCardRetrieved(const string &cardId) {
+bool Server::notifyCardRetrieved(const string &cardId, int verificationCode) {
   // Check if the card ID exists in the mapping
   auto findIt = cardFindInfo.find(cardId);
   if (findIt == cardFindInfo.end()) {
@@ -115,8 +133,14 @@ bool Server::notifyCardRetrieved(const string &cardId) {
   // Get the find info for the card
   FindInfo &findInfo = findIt->second;
 
+  long long ownerId = cardOwnerId[cardId];
+  if (userInfo[ownerId].verificationType == UserInfo::EMAIL &&
+      findInfo.verificationCode != verificationCode) {
+    return false; // Verification code does not match
+  }
+
   // Notify the owner of the card
-  notifyUser(cardOwnerId[cardId], "Your Card is Retrieved",
+  notifyUser(ownerId, "Your Card is Retrieved",
              "Your card with ID " + cardId + " has been retrieved.");
   if (findInfo.finderId != -1) {
     // Notify the finder of the card if they are registered
