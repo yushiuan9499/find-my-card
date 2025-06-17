@@ -21,6 +21,7 @@ struct UserInfo {
     EMAIL, // Email verification
     APP,   // App 2FA verification
   };
+  std::string username;                      // Username of the user
   std::string passwd;                        // Password of the user
   std::string email;                         // Email address of the user
   VerificationType verificationType = EMAIL; // Type of verification used
@@ -29,7 +30,7 @@ struct UserInfo {
                           // verification type change
 };
 
-class Server {
+class Server : public Core {
 private:
   // username -> user id mapping
   std::map<std::string, long long> userId;
@@ -175,6 +176,12 @@ public:
    * secret key, otherwise pair(-1, -1) if error occurs
    */
   std::pair<long long, long long> setup2FA(const std::string &username);
+
+  Json::Value *dumpFindInfo2JSON(const FindInfo &findInfo) const;
+  void JSON2FindInfo(const Json::Value *arg_json_ptr, FindInfo &findInfo);
+
+  virtual Json::Value *dump2JSON(void) const override;
+  virtual void JSON2Object(const Json::Value *arg_json_ptr) override;
 };
 
 #endif // SERVER_H
