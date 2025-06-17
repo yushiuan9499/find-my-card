@@ -172,6 +172,8 @@ public:
 #define EE1520_ERROR_JSON2OBJECT_BOX -53
 #define EE1520_ERROR_JSON2OBJECT_CARD -54
 #define EE1520_ERROR_JSON2OBJECT_USER -55
+#define EE1520_ERROR_JSON2OBJECT_SERVER -56
+#define EE1520_ERROR_USER_NOT_FOUND -57
 
 extern const vector<std::string> keys_Thing;
 extern const vector<std::string> keys_Locatable;

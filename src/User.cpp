@@ -224,7 +224,7 @@ Json::Value *User::dump2JSON() const {
   return json; // Return the JSON representation of the user
 }
 
-void User::JSON2Object(Json::Value *arg_json_ptr) {
+void User::JSON2Object(const Json::Value *arg_json_ptr) {
   ee1520_Exception lv_exception{};
   ee1520_Exception *lv_exception_ptr = &lv_exception;
 
