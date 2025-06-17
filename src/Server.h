@@ -25,6 +25,8 @@ struct UserInfo {
   std::string email;                         // Email address of the user
   VerificationType verificationType = EMAIL; // Type of verification used
   long long id = -1;                         // User ID, -1 if not set
+  int cardFoundCount = 0; // Count of user's cards found, for locking the
+                          // verification type change
 };
 
 class Server {

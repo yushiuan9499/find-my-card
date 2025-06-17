@@ -59,6 +59,9 @@ bool Server::setVerificationType(const string &username, const string &passwd,
   if (!checkUser(username, passwd)) {
     return false; // User does not exist or password does not match
   }
+  if (userInfo[userId[username]].cardFoundCount) {
+    return false; // Cannot change verification type while cards are found
+  }
   long long id = userId[username];
   this->userInfo[id].verificationType = type; // Set the verification type
   return true; // Verification type set successfully
@@ -130,6 +133,7 @@ bool Server::notifyCardFound(const string &cardId, const Labeled_GPS &gps,
     notifyUser(ownerId, "Your Card is Found", body, cardId);
   }
 
+  userInfo[ownerId].cardFoundCount++; // Increment card found count
   cardFindInfo[cardId] = findInfo;
   return true; // Notification sent successfully
 }
@@ -170,7 +174,8 @@ bool Server::notifyCardRetrieved(const string &cardId, int verificationCode) {
 
   // Remove the find info for the card
   cardFindInfo.erase(findIt);
-  return true; // Notification sent successfully
+  userInfo[ownerId].cardFoundCount--; // Decrement card found count
+  return true;                        // Notification sent successfully
 }
 
 const FindInfo *Server::findInfo(const string &cardId) const {
