@@ -1,4 +1,5 @@
 #include "User.h"
+#include "App2FA.h"
 #include "Box.h"
 #include "Card.h"
 #include "EmailServer.h"
@@ -97,12 +98,41 @@ Card *User::retrieveCard(Box *box, const std::string &cardId,
   if (!box) {
     return nullptr; // Invalid box
   }
-  Card *card =
-      box->retrieveCard(username, cardId, passwd, cards[paymentCardId]);
+  if (cardId.empty()) {
+    return nullptr; // Invalid card ID or payment card ID
+  }
+  int verificationCode = -1;
+  if (verificationType == UserInfo::EMAIL) {
+    // Check if the card ID has a verification code
+    if (verificationCodes.find(cardId) != verificationCodes.end()) {
+      verificationCode = verificationCodes[cardId];
+    } else {
+      cout << "No verification code found for card ID: " << cardId << endl;
+      return nullptr; // No verification code available
+    }
+  } else if (verificationType == UserInfo::APP) {
+    // Generate verification code using App2FA
+    if (!app2FA) {
+      cerr << "App2FA not set for user: " << username << endl;
+      return nullptr; // App2FA not set
+    }
+    verificationCode = app2FA->generateVerificationCode();
+    if (verificationCode == -1) {
+      cerr << "Failed to generate verification code for user: " << username
+           << endl;
+      return nullptr; // Failed to generate verification code
+    }
+  }
+  Card *card = box->retrieveCard(username, cardId, passwd, verificationCode,
+                                 cards[paymentCardId]);
   assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
     addCard(card); // Add the card back to the user's collection
+    if (verificationType == UserInfo::EMAIL) {
+      // Delete the verification code after retrieval
+      verificationCodes.erase(cardId);
+    }
   }
   return card; // Return the retrieved card or nullptr if not found
 }
@@ -129,7 +159,7 @@ int User::readReward() const {
   return 0; // Return 0 if server is not set
 }
 
-void User::readMail(int index) const {
+void User::readMail(int index) {
   if (emailServer) {
     const Email *email =
         emailServer->getEmailById(this->email, emailPasswd, index);
@@ -137,6 +167,10 @@ void User::readMail(int index) const {
     cout << "Subject: " << email->subject << "\n";
     cout << "Body: " << email->body << "\n";
     cout << "From: " << email->sender << endl;
+    cout << "Time: " << email->time.getTimeString() << endl;
+    if (!email->cardId.empty() && email->verificationCode != -1) {
+      verificationCodes[email->cardId] = email->verificationCode;
+    }
   } else {
     std::cerr << "Email server not set for user: " << username << std::endl;
   }
@@ -147,6 +181,25 @@ set<long long> User::getEmailIds() const {
     return emailServer->getEmails(username, emailPasswd);
   }
   return {}; // Return an empty set if email server is not set
+}
+
+void User::setVerificationType(UserInfo::VerificationType type) {
+  if (type == UserInfo::EMAIL) {
+    server->setVerificationType(username, passwd, type);
+    if (app2FA) {
+      delete app2FA; // Clean up the app 2FA object if it exists
+      app2FA = nullptr;
+    }
+  } else if (type == UserInfo::APP) {
+    server->setVerificationType(username, passwd, type);
+    if (app2FA == nullptr) {
+      app2FA = new App2FA(username, server); // Create a new App2FA object
+    }
+  } else {
+    cerr << "Invalid verification type" << endl;
+    return;
+  }
+  verificationType = type; // Set the verification type
 }
 
 Json::Value *User::dump2JSON() const {

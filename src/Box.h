@@ -34,11 +34,13 @@ public:
    * @param username: the username of the user who wants to retrieve the card
    * @param cardId: the id of the card to be retrieved
    * @param passwd: the password of the user
+   * @param verificationCode: the verification code for card retrieval
    * @param card: pointer to the card for payment
    * @return: pointer to the card if found, nullptr if not found or error occurs
    */
   Card *retrieveCard(const std::string &username, const std::string &cardId,
-                     const std::string &passwd, Card *card = nullptr);
+                     const std::string &passwd, int verificationCode,
+                     Card *card = nullptr);
   /**
    * @brief get the GPS location of the box
    * @return: Labeled_GPS object representing the GPS location of the box

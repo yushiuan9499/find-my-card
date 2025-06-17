@@ -1,6 +1,7 @@
 #ifndef EMAIL_SERVER_H
 #define EMAIL_SERVER_H
 
+#include "Core/JvTime.h"
 #include <map>
 #include <set>
 #include <string>
@@ -17,10 +18,16 @@ enum EmailError {
 };
 
 struct Email {
+  // For human readability
   std::string subject;
   std::string body;
+  // For object and human
   std::string sender;
-  std::string recipient; // Set of recipient email addresses
+  std::string recipient;
+  JvTime time; // Time when the email was sent
+  // For object
+  int verificationCode = -1;
+  std::string cardId = ""; // Card ID if applicable
 };
 
 class EmailServer {

@@ -36,7 +36,8 @@ Card *Box::addCard(Card *card, const string &username) {
 }
 
 Card *Box::retrieveCard(const std::string &username, const std::string &cardId,
-                        const std::string &passwd, Card *paymentCard) {
+                        const std::string &passwd, int verificationCode,
+                        Card *paymentCard) {
   // Check if the user is authenticated
   if (!server->checkUser(username, passwd)) {
     return nullptr; // Authentication failed
@@ -51,7 +52,7 @@ Card *Box::retrieveCard(const std::string &username, const std::string &cardId,
     }
     paymentCard->adjustBalance(-reward); // Deduct the reward from payment card
     // Notify the server that the card is retrieved
-    if (!server->notifyCardRetrieved(cardId)) {
+    if (!server->notifyCardRetrieved(cardId, verificationCode)) {
       return nullptr; // Failed to notify the server
     }
     cards.erase(it); // Remove the card from the box
