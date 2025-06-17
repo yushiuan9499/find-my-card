@@ -70,6 +70,7 @@ protected:
 public:
   Server(const std::string &serverAddress, const std::string &serverEmailPasswd,
          EmailServer *emailServerPtr);
+  Server(EmailServer *emailServerPtr, const Json::Value *arg_json_ptr);
   virtual ~Server();
 
   /**

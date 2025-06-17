@@ -16,6 +16,12 @@ Server::Server(const string &serverAddress, const string &serverEmailPasswd,
       emailServer(emailServerPtr), nextId(0) {
   emailServer->addAddress(serverAddress, serverEmailPasswd);
 }
+
+Server::Server(EmailServer *emailServerPtr, const Json::Value *arg_json_ptr)
+    : emailServer(emailServerPtr), nextId(0) {
+  JSON2Object(arg_json_ptr);
+}
+
 Server::~Server() {}
 
 void Server::notifyUser(long long id, const string &subject, const string &body,
