@@ -342,12 +342,16 @@ Json::Value *Server::dump2JSON() const {
     (*json)["users"][user.first] = userJson;
   }
 
-  // Dump card owner information
+  // Dump card information
   (*json)["cards"] = Json::Value(Json::arrayValue);
+  (*json)["rejectCards"] = Json::Value(Json::arrayValue);
   for (const auto &card : cardOwnerId) {
     // card.first is the card ID, card.second is the owner ID
     if (cardFindInfo.find(card.first) != cardFindInfo.end()) {
       (*json)["cards"].append(*dumpCard2JSON(card));
+    }
+    if (cardRejectInfo.find(card.first) != cardRejectInfo.end()) {
+      (*json)["rejectCards"].append(*dumpCard2JSON(card));
     }
   }
 
