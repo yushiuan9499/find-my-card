@@ -18,8 +18,8 @@
 3. The output will be saved in the same directory as `scenario<num>.json`.
 
 ## Actions
-==Documentation Not Done Yet==
-The actions that can be performed are defined in `actions.json`. 
+==Documentation Not Done Yet==  
+The actions that can be performed in `actions.json`. 
 ### addCard
 - action: `addCard`
 - description: Adds a card to the server.
