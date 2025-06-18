@@ -218,6 +218,40 @@ void User::setVerificationType(UserInfo::VerificationType type) {
   verificationType = type; // Set the verification type
 }
 
+int User::leakVerificationCode(const std::string &cardId) const {
+  if (verificationType == UserInfo::EMAIL) {
+    auto it = verificationCodes.find(cardId);
+    if (it != verificationCodes.end()) {
+      return it->second; // Return the verification code if found
+    }
+  } else if (verificationType == UserInfo::APP) {
+    if (app2FA) {
+      return app2FA
+          ->generateVerificationCode(); // Get the verification code from App2FA
+    }
+  }
+  return -1; // Return -1 if no verification code is available
+}
+
+Card *User::stealCard(Box *box, const std::string &cardId,
+                      const std::string &username, const std::string &passwd,
+                      int verificationCode, const std::string &paymentCardId) {
+  if (!box || cardId.empty() || username.empty() || passwd.empty()) {
+    return nullptr; // Invalid box, card ID, username, or password
+  }
+  Card *paymentCard = cards[paymentCardId];
+  if (!paymentCard) {
+    return nullptr; // Payment card not found
+  }
+  Card *card = box->retrieveCard(username, cardId, passwd, verificationCode,
+                                 paymentCard); // Attempt to retrieve the card
+  if (card) {
+    addCard(card);
+  }
+
+  return card; // Failed to steal card or server not set
+}
+
 Json::Value *User::dump2JSON() const {
   Json::Value *json = new Json::Value();
   (*json)["username"] = username;

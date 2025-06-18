@@ -8,12 +8,16 @@
 #include <iostream>
 using namespace std;
 
+bool is_hacker = false;
+
 struct AppContext {
   std::map<std::string, User *> &users;
   std::map<std::string, Card *> &cards;
   EmailServer &emailServer;
   Server &server;
   Box &box1;
+  User &hacker;
+  int &leakVerificationCode;
 };
 
 void dumpJSON(const AppContext &appContext, const std::string &outputFile,
@@ -29,6 +33,10 @@ void dumpJSON(const AppContext &appContext, const std::string &outputFile,
     json["cardsLost"].append(*cardPair.second->dump2JSON());
   }
   json["now"] = Env::getNowStr();
+  if (is_hacker) {
+    json["hacker"] = *appContext.hacker.dump2JSON();
+    json["hacker"]["leakVerificationCode"] = appContext.leakVerificationCode;
+  }
   json["!description"] = desc;
 
   ofstream ofs(outputFile);
@@ -66,7 +74,17 @@ int main(int argc, char *argv[]) {
     }
     Box box1{&server, &scenarioJson["box1"]};
     Env::setNow(string("2025-06-01T12:00:00+0800"));
-    AppContext appContext{users, cards, emailServer, server, box1};
+
+    User hacker(&server, "hacker", "123456", &emailServer, "hacker@gmail.com",
+                "hacker123");
+    int leakVerificationCode;
+    if (scenarioJson.isMember("hacker")) {
+      hacker.JSON2Object(&scenarioJson["hacker"]);
+      is_hacker = true;
+    }
+
+    AppContext appContext{users, cards,  emailServer,         server,
+                          box1,  hacker, leakVerificationCode};
 
     // Process actions from JSON file
     string actionFile = argv[1] + string("/actions.json");
@@ -122,6 +140,23 @@ int main(int argc, char *argv[]) {
       } else if (action == "rejectRetrieve") {
         string cardId = actionsJson[i]["cardId"].asString();
         user.rejectRetrieve(cardId);
+      }
+      // Related to hacking
+      else if (action == "leakVerificationCode") {
+        leakVerificationCode = user.leakVerificationCode();
+      } else if (action == "stealCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        string username = actionsJson[i]["username"].asString();
+        string passwd = actionsJson[i]["password"].asString();
+        string paymentCardId =
+            actionsJson[i].get("paymentCardId", "").asString();
+        Card *card = hacker.stealCard(&box1, cardId, username, passwd,
+                                      leakVerificationCode, paymentCardId);
+        if (card) {
+          cout << "Hacker stole card: " << card->getId() << endl;
+        } else {
+          cerr << "Hacker failed to steal card: " << cardId << endl;
+        }
       } else {
         cerr << "Unknown action: " << action << endl;
         return -1;
