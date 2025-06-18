@@ -59,7 +59,7 @@ public:
                    int amount, Card *card);
 
   virtual Json::Value *dump2JSON(void) const override;
-  virtual void JSON2Object(Json::Value *arg_json_ptr) override;
+  virtual void JSON2Object(const Json::Value *arg_json_ptr) override;
 };
 
 #endif // BOX_H

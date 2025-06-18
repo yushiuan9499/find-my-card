@@ -1,5 +1,7 @@
 #include "Server.h"
 #include "Core/Labeled_GPS.h"
+#include "Core/ee1520_Common.h"
+#include "Core/ee1520_Exception.h"
 #include "Core/utils.h"
 #include "EmailServer.h"
 #include "Env.h"
@@ -14,6 +16,12 @@ Server::Server(const string &serverAddress, const string &serverEmailPasswd,
       emailServer(emailServerPtr), nextId(0) {
   emailServer->addAddress(serverAddress, serverEmailPasswd);
 }
+
+Server::Server(EmailServer *emailServerPtr, const Json::Value *arg_json_ptr)
+    : emailServer(emailServerPtr), nextId(0) {
+  JSON2Object(arg_json_ptr);
+}
+
 Server::~Server() {}
 
 void Server::notifyUser(long long id, const string &subject, const string &body,
@@ -38,6 +46,7 @@ bool Server::addUser(const string &username, const string &passwd,
   }
   long long id = nextId++;
   userId[username] = id;
+  this->userInfo[id].username = username;
   this->userInfo[id].passwd = passwd;
   this->userInfo[id].email = emailAddr;
   return true; // User added successfully
@@ -244,4 +253,258 @@ pair<long long, long long> Server::setup2FA(const string &username) {
   long long secret = rand() % 100000000; // Random 8-digit code
   secret2FA.push_back(secret);
   return make_pair(id, secret); // Return the ID and secret key
+}
+
+Json::Value *Server::dumpFindInfo2JSON(const FindInfo &findInfo) const {
+  Json::Value *json = new Json::Value();
+  if (findInfo.finderId != -1) {
+    (*json)["finderName"] =
+        userInfo.at(findInfo.finderId).username; // Set the finder name
+  }
+  (*json)["reward"] = (Json::Value::Int64)findInfo.reward;
+  (*json)["gps"] = *findInfo.gps.dump2JSON();
+  (*json)["time"] = *findInfo.time.dump2JSON();
+  if (findInfo.verificationCode != -1) {
+    (*json)["verificationCode"] = findInfo.verificationCode;
+  }
+  return json; // Return the JSON representation of the find info
+}
+
+void Server::JSON2FindInfo(const Json::Value *arg_json_ptr,
+                           FindInfo &findInfo) {
+  // Check if the JSON pointer is valid
+  ee1520_Exception lv_exception{};
+  ee1520_Exception *lv_exception_ptr = &lv_exception;
+  JSON2Object_precheck(arg_json_ptr, lv_exception_ptr,
+                       EE1520_ERROR_JSON2OBJECT_SERVER);
+
+  const Json::Value &findJson = *arg_json_ptr;
+  // reward
+  if (!hasException(Integer, findJson["reward"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER,
+                    "cards[].findInfo.reward")) {
+    findInfo.reward = findJson["reward"].asInt();
+  }
+  // GPS location
+  if (!hasException(Object, findJson["gps"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "cards[].findInfo.gps")) {
+    Labeled_GPS gps;
+    gps.JSON2Object(&findJson["gps"]);
+    findInfo.gps = gps; // Set GPS location
+  }
+  // time
+  if (!hasException(Object, findJson["time"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "cards[].findInfo.time")) {
+    JvTime time;
+    time.JSON2Object(&findJson["time"]);
+    findInfo.time = time; // Set the time when the card was found
+  }
+  // verification code
+  if (findJson.isMember("verificationCode")) {
+    if (!hasException(Integer, findJson["verificationCode"], lv_exception_ptr,
+                      EE1520_ERROR_JSON2OBJECT_SERVER,
+                      "cards[].findInfo.verificationCode")) {
+      findInfo.verificationCode = findJson["verificationCode"].asInt();
+    }
+  } else {
+    findInfo.verificationCode = -1; // No verification code
+  }
+  if (lv_exception_ptr->info_vector.size() != 0) {
+    throw(*lv_exception_ptr); // Throw exception if there are errors
+  }
+  return; // Successfully parsed the find info
+}
+
+Json::Value *Server::dump2JSON() const {
+  Json::Value *json = new Json::Value();
+  (*json)["address"] = address;
+  (*json)["emailPassword"] = emailPasswd;
+
+  // Dump user information
+  (*json)["users"] = Json::Value(Json::objectValue);
+  for (const auto &user : userId) {
+    Json::Value userJson;
+    const auto &userInfo = this->userInfo.at(user.second);
+    userJson["password"] = userInfo.passwd;
+    userJson["email"] = userInfo.email;
+    if (userInfo.verificationType == UserInfo::EMAIL) {
+      userJson["verificationType"] = "EMAIL";
+    } else if (userInfo.verificationType == UserInfo::APP) {
+      userJson["verificationType"] = "APP";
+    }
+    if (rewardBalance.find(user.second) != rewardBalance.end()) {
+      userJson["rewardBalance"] =
+          (Json::Value::Int64)rewardBalance.at(user.second);
+    }
+    (*json)["users"][user.first] = userJson;
+  }
+
+  // Dump card owner information
+  (*json)["cards"] = Json::Value(Json::arrayValue);
+  for (const auto &card : cardOwnerId) {
+    // card.first is the card ID, card.second is the owner ID
+    Json::Value cardJson;
+    cardJson["id"] = card.first;
+    cardJson["ownerUsername"] = userInfo.at(card.second).username;
+    if (cardFindInfo.find(card.first) != cardFindInfo.end()) {
+      (*json)["cards"].append(dumpFindInfo2JSON(cardFindInfo.at(card.first)));
+    }
+  }
+
+  return json; // Return the JSON representation of the server
+}
+
+void Server::JSON2Object(const Json::Value *arg_json_ptr) {
+  // Check if the JSON pointer is valid
+  ee1520_Exception lv_exception{};
+  ee1520_Exception *lv_exception_ptr = &lv_exception;
+  JSON2Object_precheck(arg_json_ptr, lv_exception_ptr,
+                       EE1520_ERROR_JSON2OBJECT_SERVER);
+  string tmpAddress;
+  string tmpEmailPasswd;
+
+  // Extract server address and email password
+  if (!hasException(String, (*arg_json_ptr)["address"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "address")) {
+    tmpAddress = (*arg_json_ptr)["address"].asString();
+  }
+  if (!hasException(String, (*arg_json_ptr)["emailPassword"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "emailPassword")) {
+    tmpEmailPasswd = (*arg_json_ptr)["emailPassword"].asString();
+  }
+  // A temporary map to store data during JSON parsing
+  map<string, long long> tmpUserId;
+  map<long long, UserInfo> tmpUserInfo;
+  map<string, long long> tmpCardOwnerId;
+  map<string, FindInfo> tmpCardFindInfo;
+  map<long long, long long> tmpRewardBalance;
+  long long tmpNextId = 0;
+  // Extract user information
+  if (!hasException(Object, (*arg_json_ptr)["users"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "users")) {
+    const Json::Value &users = (*arg_json_ptr)["users"];
+    for (const auto &user : users.getMemberNames()) {
+      long long id = tmpNextId++; // Assign a new ID for the user
+      tmpUserId[user] = id;       // Map username to user ID
+      tmpUserInfo[id].username = user;
+      // password
+      if (!hasException(String, users[user]["password"], lv_exception_ptr,
+                        EE1520_ERROR_JSON2OBJECT_SERVER,
+                        "users." + user + ".password")) {
+        tmpUserInfo[id].passwd = users[user]["password"].asString();
+      }
+      // email
+      if (!hasException(String, users[user]["email"], lv_exception_ptr,
+                        EE1520_ERROR_JSON2OBJECT_SERVER,
+                        "users." + user + ".email")) {
+        tmpUserInfo[id].email = users[user]["email"].asString();
+      }
+      // reward balance
+      if (users[user].isMember("rewardBalance")) {
+        if (!hasException(Integer, users[user]["rewardBalance"],
+                          lv_exception_ptr, EE1520_ERROR_JSON2OBJECT_SERVER,
+                          "users." + user + ".rewardBalance")) {
+          tmpRewardBalance[id] =
+              users[user]["rewardBalance"].asInt64(); // Set reward balance
+        }
+      }
+      // verification type
+      if (!hasException(String, users[user]["verificationType"],
+                        lv_exception_ptr, EE1520_ERROR_JSON2OBJECT_SERVER,
+                        "users." + user + ".verificationType")) {
+        std::string type = users[user]["verificationType"].asString();
+        if (type == "EMAIL") {
+          tmpUserInfo[id].verificationType = UserInfo::EMAIL;
+        } else if (type == "APP") {
+          tmpUserInfo[id].verificationType = UserInfo::APP;
+        } else {
+          Exception_Info *ei_ptr = new Exception_Info{};
+          ei_ptr->where_code = EE1520_ERROR_JSON2OBJECT_SERVER;
+          ei_ptr->which_string = "users." + user + ".verificationType";
+          ei_ptr->how_code = EE1520_ERROR_NORMAL;
+          ei_ptr->what_code = EE1520_ERROR_JSON_KEY_TYPE_MISMATCHED;
+
+          lv_exception_ptr->info_vector.push_back(ei_ptr);
+        }
+      }
+    }
+  }
+
+  // Extract card owner information
+  if (!hasException(Array, (*arg_json_ptr)["cards"], lv_exception_ptr,
+                    EE1520_ERROR_JSON2OBJECT_SERVER, "cards")) {
+    const Json::Value &cards = (*arg_json_ptr)["cards"];
+    for (const auto &card : cards) {
+      if (!hasException(String, card["id"], lv_exception_ptr,
+                        EE1520_ERROR_JSON2OBJECT_SERVER, "cards[].id")) {
+        std::string cardId = card["id"].asString();
+
+        if (!hasException(String, card["ownerUsername"], lv_exception_ptr,
+                          EE1520_ERROR_JSON2OBJECT_SERVER,
+                          "cards[].ownerUsername")) {
+
+          std::string ownerUsername = card["ownerUsername"].asString();
+
+          if (tmpUserId.find(ownerUsername) != tmpUserId.end()) {
+            long long ownerId = tmpUserId[ownerUsername];
+            tmpCardOwnerId[cardId] = ownerId;
+          } else {
+            // wrong ownerUsername, throw an exception
+            Exception_Info *ei_ptr = new Exception_Info{};
+            ei_ptr->where_code = EE1520_ERROR_JSON2OBJECT_SERVER;
+            ei_ptr->which_string = "cards[].ownerUsername: " + ownerUsername;
+            ei_ptr->how_code = EE1520_ERROR_NORMAL;
+            ei_ptr->what_code = EE1520_ERROR_USER_NOT_FOUND;
+
+            lv_exception_ptr->info_vector.push_back(ei_ptr);
+          }
+        }
+        // Extract find info if available
+        if (card.isMember("findInfo")) {
+          if (!hasException(Object, card["findInfo"], lv_exception_ptr,
+                            EE1520_ERROR_JSON2OBJECT_SERVER,
+                            "cards[].findInfo")) {
+            FindInfo findInfo;
+            const Json::Value &findJson = card["findInfo"];
+            // find name
+            if (!hasException(String, findJson["finderName"], lv_exception_ptr,
+                              EE1520_ERROR_JSON2OBJECT_SERVER,
+                              "cards[].findInfo.finderName")) {
+              std::string finderName = findJson["finderName"].asString();
+              if (tmpUserId.find(finderName) != tmpUserId.end()) {
+                findInfo.finderId = tmpUserId[finderName];
+              } else {
+                // wrong finderName, throw an exception
+                Exception_Info *ei_ptr = new Exception_Info{};
+                ei_ptr->where_code = EE1520_ERROR_JSON2OBJECT_SERVER;
+                ei_ptr->which_string =
+                    "cards[].findInfo.finderName: " + finderName;
+                ei_ptr->how_code = EE1520_ERROR_NORMAL;
+                ei_ptr->what_code = EE1520_ERROR_USER_NOT_FOUND;
+
+                lv_exception_ptr->info_vector.push_back(ei_ptr);
+              }
+            }
+            JSON2FindInfo(&findJson, findInfo);
+          }
+        }
+      }
+    }
+  }
+  if ((lv_exception_ptr->info_vector.size() != 0)) {
+    throw(*lv_exception_ptr); // Throw exception if there are errors
+  }
+  if (!address.empty() && !emailPasswd.empty()) {
+    emailServer->removeAddress(address, emailPasswd);
+  }
+  // Assign the parsed data to the server's member variables
+  swap(userId, tmpUserId);
+  swap(userInfo, tmpUserInfo);
+  swap(cardOwnerId, tmpCardOwnerId);
+  swap(cardFindInfo, tmpCardFindInfo);
+  swap(rewardBalance, tmpRewardBalance);
+  nextId = tmpNextId;
+  address = tmpAddress;
+  emailPasswd = tmpEmailPasswd;
+  emailServer->addAddress(address, emailPasswd);
 }

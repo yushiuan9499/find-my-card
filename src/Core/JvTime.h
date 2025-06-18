@@ -33,7 +33,7 @@ class JvTime
   double operator-(JvTime& arg_jvt);
   
   virtual Json::Value * dump2JSON(void) const;
-  virtual void JSON2Object(Json::Value *);
+  virtual void JSON2Object(const Json::Value *);
 };
 
 JvTime *getNowJvTime(void);

@@ -196,7 +196,7 @@ Json::Value *JvTime::dump2JSON(void) const {
  * @exception ERROE_NULL_CPP_PTR: arg_json_ptr 是 NULL
  * @exception ERROE_TIME_STRING_FORMAT: time key 不是 YYYY-MM-DDTHH:MM:SS+ZZZZ
  */
-void JvTime::JSON2Object(Json::Value *arg_json_ptr) {
+void JvTime::JSON2Object(const Json::Value *arg_json_ptr) {
   Exception_Info *ei_ptr = NULL;
   ee1520_Exception lv_exception{};
   ee1520_Exception *lv_exception_ptr = &lv_exception;

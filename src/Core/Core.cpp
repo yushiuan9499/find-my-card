@@ -25,7 +25,7 @@ Core::Core(std::string arg_host_url, std::string arg_class_name,
   // std::cout << "Core constructor 2 called\n";
 }
 
-Json::Value *Core::dump2JSON(void)const {
+Json::Value *Core::dump2JSON(void) const {
   Json::Value *result_ptr = new Json::Value();
   if (this->host_url != "") {
     (*result_ptr)["host url"] = this->host_url;
@@ -45,7 +45,7 @@ Json::Value *Core::dump2JSON(void)const {
   return result_ptr;
 }
 
-void Core::JSON2Object(Json::Value *arg_json_ptr) {
+void Core::JSON2Object(const Json::Value *arg_json_ptr) {
   std::cerr << "Core::JSON2Object called\n";
   Exception_Info *ei_ptr = NULL;
   ee1520_Exception lv_exception{};

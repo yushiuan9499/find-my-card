@@ -146,3 +146,34 @@ EmailError EmailServer::deleteEmailById(const string &address,
 
   return NONE; // Email deleted successfully
 }
+
+Json::Value *EmailServer::dump2JSON() const {
+  Json::Value *json = new Json::Value();
+
+  for (auto user : addressId) {
+    long long id = user.second;
+    Json::Value userJson;
+    userJson["password"] = idPasswd.at(id);              // Password
+    userJson["emails"] = Json::Value(Json::objectValue); // Emails for this user
+
+    auto emailIt = emails.find(id);
+    if (emailIt != emails.end()) {
+      for (const auto &emailPair : emailIt->second) {
+        const Email *email = emailPair.second;
+        Json::Value emailJson;
+        emailJson["id"] = (Json::Value::Int64)emailPair.first; // Email ID
+        emailJson["subject"] = email->subject;
+        emailJson["body"] = email->body;
+        emailJson["sender"] = email->sender;
+        emailJson["recipient"] = email->recipient;
+        emailJson["time"] = *email->time.dump2JSON();
+
+        userJson["emails"][std::to_string(emailPair.first)] = emailJson;
+      }
+    }
+
+    (*json)[user.first] = userJson; // Store user data by ID
+  }
+
+  return json; // Return the JSON representation of the email server
+}

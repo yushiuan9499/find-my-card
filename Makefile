@@ -5,6 +5,7 @@ OBJ_DIR = build/obj
 SRC_DIR = src
 TARGET = build/main
 HEADERS = $(wildcard $(SRC_DIR)/*.h)
+HEADERS += $(wildcard $(SRC_DIR)/Core/*.h)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(filter-out $(SRC_DIR)/main.cpp,$(wildcard $(SRC_DIR)/*.cpp)))
 OBJS += $(patsubst $(SRC_DIR)/Core/%.cpp,$(OBJ_DIR)/Core/%.o,$(wildcard $(SRC_DIR)/Core/*.cpp))
 

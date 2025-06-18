@@ -1,6 +1,7 @@
 #ifndef EMAIL_SERVER_H
 #define EMAIL_SERVER_H
 
+#include "Core/Core.h"
 #include "Core/JvTime.h"
 #include <map>
 #include <set>
@@ -30,7 +31,7 @@ struct Email {
   std::string cardId = ""; // Card ID if applicable
 };
 
-class EmailServer {
+class EmailServer : public Core {
 private:
   // address -> id
   std::map<std::string, long long> addressId;
@@ -114,6 +115,8 @@ public:
    */
   EmailError deleteEmailById(const std::string &address,
                              const std::string &passwd, long long emailId);
+
+  virtual Json::Value *dump2JSON() const;
 };
 
 #endif // EMAIL_SERVER_H

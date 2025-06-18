@@ -79,7 +79,7 @@ class Labeled_GPS : public GPS_DD
   virtual bool setGPSLabel(std::string);
   // Json::Value * dump2JSON(void);
   virtual Json::Value * dump2JSON(void) const override;
-  virtual void JSON2Object(Json::Value *);
+  virtual void JSON2Object(const Json::Value *) override;
 };
 
 #endif /* _LABELED_GPS_H_ */

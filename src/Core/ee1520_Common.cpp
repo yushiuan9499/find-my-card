@@ -279,6 +279,11 @@ const char *ee1520error[] = {
     "ID being set Twice",
     "JSON2Object class Timed_Location",
     "JSON2Object class Personal_Timed_GPS_Record",
+    "JSON2Object class Box",
+    "JSON2Object class Card",
+    "JSON2Object class User",
+    "JSON2Object class Server",
+    "JSON User not found",
     "Invalid Error Code (EE1520_ERROR_MAX)",
 };
 

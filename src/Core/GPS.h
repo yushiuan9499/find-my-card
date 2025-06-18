@@ -26,7 +26,7 @@ public:
 
   // Json::Value * dump2JSON(void);
   virtual Json::Value *dump2JSON(void) const override;
-  virtual void JSON2Object(Json::Value *);
+  virtual void JSON2Object(const Json::Value *) override;
 };
 
 #endif /* _GPS_H_ */

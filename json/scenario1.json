@@ -38,5 +38,11 @@
       "label": "Taipei 101"
     },
     "cards": []
+  },
+  "server": {
+    "address": "server@gmail.com",
+    "emailPassword": "serverEmailPassword123",
+    "cards": [],
+    "users": {}
   }
 }

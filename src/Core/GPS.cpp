@@ -153,7 +153,7 @@ GPS_DD::dump2JSON
 
 void
 GPS_DD::JSON2Object
-(Json::Value * arg_json_ptr)
+(const Json::Value * arg_json_ptr)
 {
   Exception_Info * ei_ptr = NULL;
   ee1520_Exception lv_exception {};
