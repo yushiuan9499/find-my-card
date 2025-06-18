@@ -85,6 +85,13 @@ public:
                      const std::string &paymentCardId = "");
 
   /**
+   * @brief reject the retrieval of a card
+   * @param cardId: the id of the card to be rejected
+   * @return true if the rejection is successful,
+   */
+  bool rejectRetrieve(const std::string &cardId);
+
+  /**
    * @brief redeem a reward for the user
    * @param box: pointer to the box where the reward will be redeemed
    * @param cardId: the id of the card used for payment
