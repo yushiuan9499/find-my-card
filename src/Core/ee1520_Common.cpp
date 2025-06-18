@@ -106,7 +106,6 @@ void myPrintLog(std::string content, std::string fname) {
  * @return: 結果
  */
 int myParseJSON(std::string input, Json::Value *jv_ptr) {
-  std::cerr << "myParseJSON called" << std::endl;
   if (jv_ptr == NULL)
     return EE1520_ERROR_NULL_JSON_PTR;
 
@@ -173,14 +172,9 @@ char *myFile2String(const char *f_name) {
  * @return result: 結果
  */
 int myFile2JSON(const char *f_name, Json::Value *jv_ptr) {
-  std::cerr << "myFile2JSON called" << std::endl;
   int rc;
 
   char *json_str = myFile2String(f_name);
-  std::cout << f_name << std::endl;
-  std::cout << ((void *)json_str) << std::endl;
-  std::cout << json_str << std::endl;
-  std::cout << (jv_ptr) << std::endl;
 
   if (json_str == NULL) {
     rc = EE1520_ERROR_FILE_NOT_EXIST;
@@ -213,7 +207,6 @@ int myJSON2File(char *f_name, Json::Value *jv_ptr) {
   size_t lresult;
 
   lSize = strlen(json_buf_ptr);
-  std::cout << f_name << " " << lSize << std::endl;
   lresult = fwrite(json_buf_ptr, 1, lSize, f_ptr);
   free(json_buf_ptr);
   fclose(f_ptr);
