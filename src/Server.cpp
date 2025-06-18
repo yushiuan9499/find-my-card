@@ -54,6 +54,24 @@ bool Server::removeUser(const string &username, const string &passwd) {
   return true; // User removed successfully
 }
 
+bool Server::rejectRetrieve(const string &username, const string &passwd,
+                            const string &id) {
+  if (!checkUser(username, passwd)) {
+    return false; // User does not exist or password does not match
+  }
+  auto it = cardOwnerId.find(id);
+  if (it == cardOwnerId.end()) {
+    return false; // Card ID not found
+  }
+  long long ownerId = it->second;
+  if (ownerId != userId[username]) {
+    return false; // User is not the owner of the card
+  }
+  cardRejectInfo[id] = cardFindInfo[id]; // Store the find info for rejection
+  cardFindInfo.erase(id);                // Remove the find info for the card
+  return true;                           // Card retrieval rejected successfully
+}
+
 bool Server::setVerificationType(const string &username, const string &passwd,
                                  UserInfo::VerificationType type) {
   if (!checkUser(username, passwd)) {

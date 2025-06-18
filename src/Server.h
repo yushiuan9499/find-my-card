@@ -41,6 +41,8 @@ private:
   std::map<std::string, long long> cardOwnerId;
   // card id -> find info mapping
   std::map<std::string, FindInfo> cardFindInfo;
+  // card id -> reject card info mapping
+  std::map<std::string, FindInfo> cardRejectInfo;
   std::vector<long long> secret2FA; // Verification codes for cards
   // Server's email address
   std::string address;
@@ -107,11 +109,22 @@ public:
                            UserInfo::VerificationType type);
 
   /**
+   * @brief reject to retrieve a card
+   * @param username: the username of the user who wants to retrieve the card
+   * @param passwd: the password of the user who wants to retrieve the card
+   * @param id: the ID of the card should be retrieved
+   * @return true if the retrieval is rejected successfully, false if the user
+   */
+  bool rejectRetrieve(const std::string &username, const std::string &passwd,
+                      const std::string &id);
+
+  /**
    * @brief Add a card to the server
    * @param owner: the username of the owner of the card
    * @param passwd: the password of the owner of the card
    * @param id: the ID of the card
-   * @return true if the card is added successfully, false if the owner does not
+   * @return true if the card is added successfully, false if the owner does
+   * not
    */
   bool addCard(const std::string &owner, const std::string &passwd,
                const std::string &id);

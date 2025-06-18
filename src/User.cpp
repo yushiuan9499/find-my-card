@@ -137,6 +137,13 @@ Card *User::retrieveCard(Box *box, const std::string &cardId,
   return card; // Return the retrieved card or nullptr if not found
 }
 
+bool User::rejectRetrieve(const std::string &cardId) {
+  if (server && !cardId.empty()) {
+    return server->rejectRetrieve(username, passwd, cardId);
+  }
+  return false; // Failed to reject retrieval or server not set
+}
+
 int User::redeemReward(Box *box, const std::string &cardId, int amount) {
   if (!box || cardId.empty()) {
     return -1; // Invalid box or card ID
