@@ -28,10 +28,12 @@ private:
   App2FA *app2FA = nullptr; // Pointer to the App 2FA instance for verification
 protected:
 public:
+  User();
   User(Server *server, const std::string &username, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
-  User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr);
+  User(Server *server, EmailServer *emailServer,
+       const Json::Value *arg_json_ptr);
   virtual ~User();
 
   /**

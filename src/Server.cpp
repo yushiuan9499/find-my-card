@@ -255,19 +255,22 @@ pair<long long, long long> Server::setup2FA(const string &username) {
   return make_pair(id, secret); // Return the ID and secret key
 }
 
-Json::Value *Server::dumpFindInfo2JSON(const FindInfo &findInfo) const {
+Json::Value *
+Server::dumpCard2JSON(const pair<string, long long> cardPair) const {
   Json::Value *json = new Json::Value();
-  if (findInfo.finderId != -1) {
-    (*json)["finderName"] =
-        userInfo.at(findInfo.finderId).username; // Set the finder name
+  (*json)["id"] = cardPair.first; // Card ID
+  (*json)["ownerUsername"] = userInfo.at(cardPair.second).username;
+  if (cardFindInfo.find(cardPair.first) != cardFindInfo.end()) {
+    (*json)["findInfo"] = Json::Value(Json::objectValue);
+    const FindInfo &findInfo = cardFindInfo.at(cardPair.first);
+    (*json)["findInfo"]["reward"] = findInfo.reward;
+    (*json)["findInfo"]["gps"] = *findInfo.gps.dump2JSON();
+    (*json)["findInfo"]["time"] = *findInfo.time.dump2JSON();
+    if (findInfo.verificationCode != -1) {
+      (*json)["findInfo"]["verificationCode"] = findInfo.verificationCode;
+    }
   }
-  (*json)["reward"] = (Json::Value::Int64)findInfo.reward;
-  (*json)["gps"] = *findInfo.gps.dump2JSON();
-  (*json)["time"] = *findInfo.time.dump2JSON();
-  if (findInfo.verificationCode != -1) {
-    (*json)["verificationCode"] = findInfo.verificationCode;
-  }
-  return json; // Return the JSON representation of the find info
+  return json; // Return the JSON representation of the card
 }
 
 void Server::JSON2FindInfo(const Json::Value *arg_json_ptr,
@@ -343,11 +346,8 @@ Json::Value *Server::dump2JSON() const {
   (*json)["cards"] = Json::Value(Json::arrayValue);
   for (const auto &card : cardOwnerId) {
     // card.first is the card ID, card.second is the owner ID
-    Json::Value cardJson;
-    cardJson["id"] = card.first;
-    cardJson["ownerUsername"] = userInfo.at(card.second).username;
     if (cardFindInfo.find(card.first) != cardFindInfo.end()) {
-      (*json)["cards"].append(dumpFindInfo2JSON(cardFindInfo.at(card.first)));
+      (*json)["cards"].append(*dumpCard2JSON(card));
     }
   }
 

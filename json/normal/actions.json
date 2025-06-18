@@ -1,0 +1,38 @@
+[
+  {
+    "action": "addCard",
+    "who": "yushiuan9499",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "removeCard",
+    "who": "yushiuan9499",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "getCard",
+    "who": "tobiichi3227",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "dropCard",
+    "who": "tobiichi3227",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "readMail",
+    "who": "yushiuan9499"
+  },
+  {
+    "action": "retrieveCard",
+    "who": "yushiuan9499",
+    "cardId": "31415926535",
+    "paymentCardId": "998244353"
+  },
+  {
+    "action": "redeemReward",
+    "who": "tobiichi3227",
+    "amount": -1,
+    "cardId": "27182818284"
+  }
+]

@@ -5,8 +5,16 @@
 #include "EmailServer.h"
 #include "Server.h"
 #include <cassert>
+#include <complex>
 #include <iostream>
 using namespace std;
+
+User::User()
+    : server(nullptr), emailServer(nullptr), verificationType(UserInfo::EMAIL),
+      app2FA(nullptr) {
+  // Default constructor initializes pointers to nullptr
+  // It shouldn't be used
+}
 
 User::User(Server *server, const string &usrName, const string &passwd,
            EmailServer *emailServer, const string &emailAddr,
@@ -17,7 +25,8 @@ User::User(Server *server, const string &usrName, const string &passwd,
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
 
-User::User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr)
+User::User(Server *server, EmailServer *emailServer,
+           const Json::Value *arg_json_ptr)
     : server(server), emailServer(emailServer) {
   JSON2Object(arg_json_ptr);
   this->server->addUser(username, passwd, email);
@@ -85,7 +94,7 @@ bool User::dropCard(Box *box, const std::string &cardId) {
   if (it == cards.end()) {
     return false; // Card not owned by the user
   }
-  Card *result = box->addCard(it->second);
+  Card *result = box->addCard(it->second, username);
   if (result == nullptr) {
     removeCard(cardId);
     return true;
@@ -174,7 +183,7 @@ void User::readMail(int index) {
     cout << "Subject: " << email->subject << "\n";
     cout << "Body: " << email->body << "\n";
     cout << "From: " << email->sender << endl;
-    cout << "Time: " << email->time.getTimeString() << endl;
+    cout << "Time: " << *email->time.getTimeString() << endl;
     if (!email->cardId.empty() && email->verificationCode != -1) {
       verificationCodes[email->cardId] = email->verificationCode;
     }
@@ -216,6 +225,11 @@ Json::Value *User::dump2JSON() const {
   (*json)["emailPassword"] = emailPasswd;
   (*json)["password"] = passwd;
   (*json)["cards"] = Json::Value(Json::arrayValue);
+  if (verificationType == UserInfo::EMAIL) {
+    (*json)["verificationType"] = "EMAIL";
+  } else if (verificationType == UserInfo::APP) {
+    (*json)["verificationType"] = "APP";
+  }
 
   for (auto card : cards) {
     (*json)["cards"].append(*card.second->dump2JSON());
@@ -256,6 +270,25 @@ void User::JSON2Object(const Json::Value *arg_json_ptr) {
         Card *card = new Card(&(*arg_json_ptr)["cards"][i]);
         this->addCard(card);
       }
+    }
+  }
+
+  server->addUser(username, passwd, email);
+  if (!arg_json_ptr->isMember("verificationType")) {
+    // If verificationType is not present, default to EMAIL
+    this->setVerificationType(UserInfo::EMAIL);
+  } else if (!hasException(String, (*arg_json_ptr)["verificationType"],
+                           lv_exception_ptr, EE1520_ERROR_JSON2OBJECT_USER,
+                           "verificationType")) {
+    string verificationTypeStr = (*arg_json_ptr)["verificationType"].asString();
+    if (verificationTypeStr == "EMAIL") {
+      this->setVerificationType(UserInfo::EMAIL);
+    } else if (verificationTypeStr == "APP") {
+      this->setVerificationType(UserInfo::APP);
+    } else {
+      // If the verification type is invalid, default to EMAIL
+      cerr << "Invalid verification type, defaulting to EMAIL" << endl;
+      this->setVerificationType(UserInfo::EMAIL);
     }
   }
 

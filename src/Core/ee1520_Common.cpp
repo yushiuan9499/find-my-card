@@ -135,7 +135,7 @@ int myParseJSON(std::string input, Json::Value *jv_ptr) {
  * @param f_name: 檔案名稱
  * @return result_ptr: 檔案內容字串
  */
-char *myFile2String(char *f_name) {
+char *myFile2String(const char *f_name) {
   if (f_name == NULL)
     return NULL;
   FILE *f_ptr = fopen(f_name, "r");
@@ -172,7 +172,7 @@ char *myFile2String(char *f_name) {
  * @param jv_ptr: JSON物件指標
  * @return result: 結果
  */
-int myFile2JSON(char *f_name, Json::Value *jv_ptr) {
+int myFile2JSON(const char *f_name, Json::Value *jv_ptr) {
   std::cerr << "myFile2JSON called" << std::endl;
   int rc;
 
