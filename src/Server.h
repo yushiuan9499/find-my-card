@@ -178,7 +178,7 @@ public:
    */
   std::pair<long long, long long> setup2FA(const std::string &username);
 
-  Json::Value *dumpFindInfo2JSON(const FindInfo &findInfo) const;
+  Json::Value *dumpCard2JSON(const pair<std::string, long long> cardPair) const;
   void JSON2FindInfo(const Json::Value *arg_json_ptr, FindInfo &findInfo);
 
   virtual Json::Value *dump2JSON(void) const override;

@@ -31,5 +31,13 @@ public:
    * @param newTimeStr: String representation of the new time to set
    */
   static void setNow(const std::string &newTimeStr);
+
+  /**
+   * @brief Move the current time forward by a specified amount
+   * @param hours: Number of hours to move forward
+   * @param minutes: Number of minutes to move forward
+   * @param seconds: Number of seconds to move forward
+   */
+  static void moveNow(int hours, int minutes, int seconds);
 };
 #endif // ENV_H

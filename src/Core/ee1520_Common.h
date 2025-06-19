@@ -44,8 +44,8 @@ enum JSONType {
 // utility functions
 void myPrintLog(std::string content, std::string fname);
 int myParseJSON(std::string input, Json::Value *jv_ptr);
-char *myFile2String(char *f_name);
-int myFile2JSON(char *f_name, Json::Value *jv_ptr);
+char *myFile2String(const char *f_name);
+int myFile2JSON(const char *f_name, Json::Value *jv_ptr);
 int myJSON2File(char *f_name, Json::Value *jv_ptr);
 int checkPostID(std::string);
 int checkBigID(std::string);
