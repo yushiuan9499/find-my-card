@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
     if (scenarioJson.isMember("hacker")) {
       hacker.JSON2Object(&scenarioJson["hacker"]);
       is_hacker = true;
+      users["hacker"] = &hacker;
     }
 
     AppContext appContext{users, cards,  emailServer,         server,

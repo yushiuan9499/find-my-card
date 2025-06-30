@@ -1,0 +1,21 @@
+[
+  {
+    "action": "addCard",
+    "who": "yushiuan9499",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "dropCard",
+    "who": "hacker",
+    "cardId": "31415926535"
+  },
+  {
+    "action": "readMail",
+    "who": "yushiuan9499"
+  },
+  {
+    "action": "rejectRetrieve",
+    "who": "yushiuan9499",
+    "cardId": "31415926535"
+  }
+]
