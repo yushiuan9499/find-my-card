@@ -17,9 +17,8 @@
     ```
 3. The output will be saved in the same directory as `scenario<num>.json`.
 
-## Actions
-==Documentation Not Done Yet==  
-The actions that can be performed in `actions.json`. 
-### addCard
-- action: `addCard`
-- description: Adds a card to the server.
+## Scenarios
+- `normal/`: 描述正常的情形。
+- `fakeCard/`: 描述攻擊者偽造卡片的情形。
+- `hackNoVeri`: 描述攻擊者沒有取得 Email 驗證碼的情形。
+- `hackWVeri`: 描述供給者取得過時的 2PA 驗證碼的情形。
