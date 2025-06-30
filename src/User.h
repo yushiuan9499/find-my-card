@@ -28,10 +28,12 @@ private:
   App2FA *app2FA = nullptr; // Pointer to the App 2FA instance for verification
 protected:
 public:
+  User();
   User(Server *server, const std::string &username, const std::string &passwd,
        EmailServer *emailServer, const std::string &emailAddr,
        const std::string &emailPasswd);
-  User(Server *server, EmailServer *emailServer, Json::Value *arg_json_ptr);
+  User(Server *server, EmailServer *emailServer,
+       const Json::Value *arg_json_ptr);
   virtual ~User();
 
   /**
@@ -127,6 +129,28 @@ public:
    * @param type: the verification type to be set
    */
   void setVerificationType(UserInfo::VerificationType type);
+
+  /* Below are for testing purposes */
+  /**
+   * @brief Leak the verification code (For testing purposes)
+   * @param cardId: the ID of the card for which the verification code is leaked
+   * @return the verification code if it exists, otherwise -1
+   */
+  int leakVerificationCode(const std::string &cardId = "") const;
+
+  /**
+   * @brief Steal a card from another user
+   * @param box: pointer to the box where the card is stored
+   * @param cardId: the ID of the card to be stolen
+   * @param username: the username of the user who owns the card
+   * @param passwd: the password of the user who owns the card
+   * @param verificationCode: the verification code for the card retrieval
+   * @param paymentCardId: the ID of the card used for payment (optional)
+   * @return pointer to the stolen card if successful
+   */
+  Card *stealCard(Box *box, const std::string &cardId,
+                  const std::string &username, const std::string &passwd,
+                  int verificationCode, const std::string &paymentCardId = "");
 
   virtual Json::Value *dump2JSON(void) const override;
   virtual void JSON2Object(const Json::Value *arg_json_ptr) override;

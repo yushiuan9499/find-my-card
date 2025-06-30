@@ -8,57 +8,166 @@
 #include <iostream>
 using namespace std;
 
-int main() {
+bool is_hacker = false;
+
+struct AppContext {
+  std::map<std::string, User *> &users;
+  std::map<std::string, Card *> &cards;
+  EmailServer &emailServer;
+  Server &server;
+  Box &box1;
+  User &hacker;
+  int &leakVerificationCode;
+};
+
+void dumpJSON(const AppContext &appContext, const std::string &outputFile,
+              const std::string &desc = "") {
+  Json::Value json;
+  for (const auto &userPair : appContext.users) {
+    json["users"].append(*userPair.second->dump2JSON());
+  }
+  json["box1"] = *appContext.box1.dump2JSON();
+  json["server"] = *appContext.server.dump2JSON();
+  json["emailServer"] = *appContext.emailServer.dump2JSON();
+  for (const auto &cardPair : appContext.cards) {
+    json["cardsLost"].append(*cardPair.second->dump2JSON());
+  }
+  json["now"] = Env::getNowStr();
+  if (is_hacker) {
+    json["hacker"] = *appContext.hacker.dump2JSON();
+    json["hacker"]["leakVerificationCode"] = appContext.leakVerificationCode;
+  }
+  json["!description"] = desc;
+
+  ofstream ofs(outputFile);
+  if (ofs.is_open()) {
+    ofs << json.toStyledString();
+    ofs.close();
+  } else {
+    cerr << "Failed to open output file." << endl;
+  }
+}
+
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    cerr << "Usage: " << argv[0] << " <json_file_dir>" << endl;
+    return -1;
+  }
+
   // Load scenario from JSON file
-  char scenarioFile[] = "./json/scenario1.json";
-  EmailServer emailServer;
+  string scenarioFile = argv[1] + string("/scenario0.json");
   Json::Value scenarioJson;
-  if (myFile2JSON(scenarioFile, &scenarioJson) != EE1520_ERROR_NORMAL) {
+  if (myFile2JSON(scenarioFile.c_str(), &scenarioJson) != EE1520_ERROR_NORMAL) {
     cerr << "Failed to read scenario file: " << scenarioFile << endl;
     return -1;
   }
   try {
+    // Initialize environment
+    map<string, User *> users;
+    map<string, Card *> cards;
+    EmailServer emailServer;
     Server server{&emailServer, &scenarioJson["server"]};
-    User yushiuan9499{&server, &emailServer, &scenarioJson["yushiuan9499"]};
-    User tobiichi3227{&server, &emailServer, &scenarioJson["tobiichi3227"]};
+    for (int i = 0; i < scenarioJson["users"].size(); i++) {
+      string userId = scenarioJson["users"][i]["username"].asString();
+      users[userId] =
+          new User(&server, &emailServer, &scenarioJson["users"][i]);
+    }
     Box box1{&server, &scenarioJson["box1"]};
-
-    yushiuan9499.setVerificationType(UserInfo::APP);
-
-    // Add the card to the server
-    yushiuan9499.addCardToServer(string("31415926535"));
-
     Env::setNow(string("2025-06-01T12:00:00+0800"));
-    // yushiuan9499 lost his card
-    Card *tmpCard = yushiuan9499.removeCard(string("31415926535"));
-    cout << "yushiuan9499: " << yushiuan9499.dump2JSON()->toStyledString()
-         << endl;
-    // tobiichi3227 found the card
-    tobiichi3227.addCard(tmpCard);
-    cout << "tobiichi3227: " << tobiichi3227.dump2JSON()->toStyledString()
-         << endl;
-    // tobiichi3227 put the card into box1
-    tobiichi3227.dropCard(&box1, tmpCard);
-    cout << "box1: " << box1.dump2JSON()->toStyledString() << endl;
-    // yushiuan9499 receive the email
-    yushiuan9499.readMail(*yushiuan9499.getEmailIds().begin());
-    // yushiuan9499 retrieve the card from box1
-    yushiuan9499.retrieveCard(&box1, string("31415926535"),
-                              string("998244353"));
-    // print the state of all users and the box
-    cout << "yushiuan9499: " << yushiuan9499.dump2JSON()->toStyledString()
-         << endl;
-    cout << "tobiichi3227: " << tobiichi3227.dump2JSON()->toStyledString()
-         << endl;
-    cout << "box1: " << box1.dump2JSON()->toStyledString() << endl;
-    // tobiichi3227 check its reward
-    cout << "tobiichi3227's reward: " << tobiichi3227.readReward() << endl;
-    // tobiichi3227 redeem its reward
-    cout << tobiichi3227.redeemReward(&box1, "27182818284") << endl;
-    cout << "tobiichi3227 after redeem: "
-         << tobiichi3227.dump2JSON()->toStyledString() << endl;
-    cout << "tobiichi3227's reward after redeem: " << tobiichi3227.readReward()
-         << endl;
+
+    User hacker(&server, "hacker", "123456", &emailServer, "hacker@gmail.com",
+                "hacker123");
+    int leakVerificationCode;
+    if (scenarioJson.isMember("hacker")) {
+      hacker.JSON2Object(&scenarioJson["hacker"]);
+      is_hacker = true;
+      users["hacker"] = &hacker;
+    }
+
+    AppContext appContext{users, cards,  emailServer,         server,
+                          box1,  hacker, leakVerificationCode};
+
+    // Process actions from JSON file
+    string actionFile = argv[1] + string("/actions.json");
+    Json::Value actionsJson;
+    if (myFile2JSON(actionFile.c_str(), &actionsJson) != EE1520_ERROR_NORMAL) {
+      cerr << "Failed to read action file: " << actionFile << endl;
+      return -1;
+    }
+
+    for (int i = 0; i < actionsJson.size(); i++) {
+      string action = actionsJson[i]["action"].asString();
+      string who = actionsJson[i]["who"].asString();
+      User &user = *users[who];
+      // Related to card
+      if (action == "addCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        user.addCardToServer(cardId);
+      } else if (action == "removeCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        cards[cardId] = user.removeCard(cardId);
+      } else if (action == "getCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        user.addCard(cards[cardId]);
+        cards.erase(cardId);
+      } else if (action == "dropCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        user.dropCard(&box1, cardId);
+      } else if (action == "retrieveCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        string paymentCardId = actionsJson[i]["paymentCardId"].asString();
+        user.retrieveCard(&box1, cardId, paymentCardId);
+      }
+      // Related to email
+      else if (action == "readMail") {
+        int mailId = actionsJson[i]["mailId"].asInt();
+        user.readMail(mailId);
+      }
+      // Related to server
+      else if (action == "setVerificationType") {
+        string verificationType = actionsJson[i]["verificationType"].asString();
+        if (verificationType == "EMAIL") {
+          user.setVerificationType(UserInfo::EMAIL);
+        } else if (verificationType == "APP") {
+          user.setVerificationType(UserInfo::APP);
+        } else {
+          cerr << "Unknown verification type: " << verificationType << endl;
+          return -1;
+        }
+      } else if (action == "redeemReward") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        int amount = actionsJson[i]["amount"].asInt();
+        user.redeemReward(&box1, cardId, amount);
+      } else if (action == "rejectRetrieve") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        user.rejectRetrieve(cardId);
+      }
+      // Related to hacking
+      else if (action == "leakVerificationCode") {
+        leakVerificationCode = user.leakVerificationCode();
+      } else if (action == "stealCard") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        string username = actionsJson[i]["username"].asString();
+        string passwd = actionsJson[i]["password"].asString();
+        string paymentCardId =
+            actionsJson[i].get("paymentCardId", "").asString();
+        Card *card = hacker.stealCard(&box1, cardId, username, passwd,
+                                      leakVerificationCode, paymentCardId);
+        if (card) {
+          cout << "Hacker stole card: " << card->getId() << endl;
+        } else {
+          cerr << "Hacker failed to steal card: " << cardId << endl;
+        }
+      } else {
+        cerr << "Unknown action: " << action << endl;
+        return -1;
+      }
+      Env::moveNow(1, 0, 0);
+      dumpJSON(appContext,
+               argv[1] + string("/scenario") + to_string(i + 1) +
+                   string(".json"),
+               "Scenario after action " + to_string(i + 1) + ": " + action);
+    }
   } catch (ee1520_Exception &e) {
     cerr << "Exception occurred: " << e.dump2JSON()->toStyledString() << endl;
     return -1;

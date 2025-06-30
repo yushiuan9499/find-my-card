@@ -50,13 +50,13 @@ Card *Box::retrieveCard(const std::string &username, const std::string &cardId,
     if (reward > paymentCard->getBalance()) {
       return nullptr; // Not enough balance on the payment card
     }
-    paymentCard->adjustBalance(-reward); // Deduct the reward from payment card
     // Notify the server that the card is retrieved
     if (!server->notifyCardRetrieved(cardId, verificationCode)) {
       return nullptr; // Failed to notify the server
     }
-    cards.erase(it); // Remove the card from the box
-    return card;     // Return the card pointer
+    paymentCard->adjustBalance(-reward); // Deduct the reward from payment card
+    cards.erase(it);                     // Remove the card from the box
+    return card;                         // Return the card pointer
   }
 
   return nullptr; // Card not found
