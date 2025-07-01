@@ -23,6 +23,7 @@ struct UserInfo {
   };
   std::string username;                      // Username of the user
   std::string passwd;                        // Password of the user
+  std::string nickname;                      // Nickname of the user
   std::string email;                         // Email address of the user
   VerificationType verificationType = EMAIL; // Type of verification used
   long long id = -1;                         // User ID, -1 if not set
@@ -78,11 +79,12 @@ public:
    * @param username: the username of the user
    * @param passwd: the password of the user
    * @param emailAddr: the email address of the user
+   * @param nickname: the nickname of the user
    * @retval true: the user is added successfully
    *         false: the username already exists or the email address is invalid
    */
   bool addUser(const std::string &username, const std::string &passwd,
-               const std::string &emailAddr);
+               const std::string &emailAddr, const std::string &nickname);
   /**
    * @brief Remove a user from the server
    * @param username: the username of the user to be removed
@@ -91,6 +93,7 @@ public:
    * does not exist or the password does not match
    */
   bool removeUser(const std::string &username, const std::string &passwd);
+
   /**
    * @brief Check if the username and password match
    * @param username: the username of the user
@@ -98,6 +101,15 @@ public:
    * @return true if the username and password match, false otherwise
    */
   bool checkUser(const std::string &username, const std::string &passwd) const;
+
+  /**
+   * @brief Get the nickname of user, it can only be call by box
+   * @param username: the username of the user
+   * @param passwd: the password of the user
+   * @return true if the username and password match, false otherwise
+   */
+  std::string getNickname(const std::string &username) const;
+
   /**
    * @brief Set the verification type for a user
    * @param username: the username of the user

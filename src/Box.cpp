@@ -1,10 +1,17 @@
 #include "Box.h"
 #include "Card.h"
 #include "Core/ee1520_Common.h"
+#include "Env.h"
 #include "Server.h"
 #include <algorithm>
 #include <cassert>
 using namespace std;
+
+void Box::Session::clear() {
+  username = "";
+  passwd = "";
+}
+
 Box::Box(Server *server, const Labeled_GPS &gpsLocation)
     : server(server), gps(gpsLocation) {}
 
@@ -20,10 +27,36 @@ Box::~Box() {
   cards.clear();
 }
 
-Card *Box::addCard(Card *card, const string &username) {
+const Box::Session &Box::getSession() {
+  constexpr int VALID_SEC = 60;
+  if (JvTime currentTime = Env::getNow();
+      currentTime - sess.lastActive > VALID_SEC) {
+    // session outdated.
+    sess.clear();
+  } else
+    sess.lastActive = currentTime;
+  return sess;
+}
+
+string Box::login(const string &username, const string &passwd) {
+  // NOTE: 為了防暴搜username，實際上要在錯誤時拖延時間
+  //       或是讓用戶能用QRcode登入，讓用戶必須有密碼
+  string ret = server->getNickname(username);
+  if (!passwd.empty() && !server->checkUser(username, passwd))
+    return "";
+  sess.username = username;
+  sess.passwd = passwd;
+  sess.lastActive = Env::getNow();
+  return ret;
+}
+
+Card *Box::addCard(Card *card) {
   if (card == nullptr) {
     return card; // Return the card itself if it's null
   }
+  const string &username = getSession().username;
+  if (username.empty())
+    return card;
   assert(cards.find(card->getId()) == cards.end() &&
          "Card with the same ID already exists in the box");
   int reward =
@@ -35,9 +68,11 @@ Card *Box::addCard(Card *card, const string &username) {
   return nullptr;              // Card added successfully
 }
 
-Card *Box::retrieveCard(const std::string &username, const std::string &cardId,
-                        const std::string &passwd, int verificationCode,
+Card *Box::retrieveCard(const std::string &cardId, int verificationCode,
                         Card *paymentCard) {
+  const Session &sess = getSession();
+  const string &username = sess.username;
+  const string &passwd = sess.passwd;
   // Check if the user is authenticated
   if (!server->checkUser(username, passwd)) {
     return nullptr; // Authentication failed
@@ -66,8 +101,10 @@ Labeled_GPS Box::getGPSLocation() const {
   return gps; // Return the GPS location of the box
 }
 
-int Box::redeemReward(const std::string &username, const std::string &passwd,
-                      int amount, Card *card) {
+int Box::redeemReward(int amount, Card *card) {
+  const Session &sess = getSession();
+  const string &username = sess.username;
+  const string &passwd = sess.passwd;
   if (card == nullptr) {
     return -1; // No card provided for payment
   }
