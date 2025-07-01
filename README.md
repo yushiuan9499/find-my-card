@@ -21,3 +21,4 @@
 - `fakeCard/`: 描述攻擊者偽造卡片的情形。
 - `hackNoVeri`: 描述攻擊者沒有取得 Email 驗證碼的情形。
 - `hackWVeri`: 描述供給者取得過時的 2PA 驗證碼的情形。
+- `fakeBox`: 描述攻擊者偽造盒子的情形。
