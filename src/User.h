@@ -14,6 +14,7 @@ class App2FA;
 
 class User : public Core {
 private:
+  std::string nickname;
   std::string username;
   std::string emailPasswd;
   std::string passwd; // Password for the user
@@ -30,10 +31,11 @@ protected:
 public:
   User();
   User(Server *server, const std::string &username, const std::string &passwd,
-       EmailServer *emailServer, const std::string &emailAddr,
-       const std::string &emailPasswd);
+       const std::string &nickname, EmailServer *emailServer,
+       const std::string &emailAddr, const std::string &emailPasswd);
   User(Server *server, EmailServer *emailServer,
        const Json::Value *arg_json_ptr);
+  User(Server *server, EmailServer *emailServer);
   virtual ~User();
 
   /**

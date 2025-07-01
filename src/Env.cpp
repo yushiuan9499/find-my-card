@@ -28,3 +28,9 @@ void Env::moveNow(int hours, int minutes, int seconds) {
   now.setStdTM(tm_ptr);
   free(tm_ptr);
 }
+
+void Env::moveNow(const std::string time) {
+  int hours, minutes, seconds;
+  sscanf(time.c_str(), "%d:%d:%d", &hours, &minutes, &seconds);
+  moveNow(hours, minutes, seconds);
+}

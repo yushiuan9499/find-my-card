@@ -2,6 +2,7 @@
 #include "Card.h"
 #include "EmailServer.h"
 #include "Env.h"
+#include "FakeBox.h"
 #include "Server.h"
 #include "User.h"
 #include <fstream>
@@ -16,6 +17,7 @@ struct AppContext {
   EmailServer &emailServer;
   Server &server;
   Box &box1;
+  FakeBox &fakeBox;
   User &hacker;
   int &leakVerificationCode;
 };
@@ -37,6 +39,7 @@ void dumpJSON(const AppContext &appContext, const std::string &outputFile,
     json["hacker"] = *appContext.hacker.dump2JSON();
     json["hacker"]["leakVerificationCode"] = appContext.leakVerificationCode;
   }
+  json["fakeBox"] = *appContext.fakeBox.dump2JSON();
   json["!description"] = desc;
 
   ofstream ofs(outputFile);
@@ -73,10 +76,11 @@ int main(int argc, char *argv[]) {
           new User(&server, &emailServer, &scenarioJson["users"][i]);
     }
     Box box1{&server, &scenarioJson["box1"]};
+    FakeBox fakeBox{};
     Env::setNow(string("2025-06-01T12:00:00+0800"));
 
-    User hacker(&server, "hacker", "123456", &emailServer, "hacker@gmail.com",
-                "hacker123");
+    User hacker{&server, &emailServer};
+
     int leakVerificationCode;
     if (scenarioJson.isMember("hacker")) {
       hacker.JSON2Object(&scenarioJson["hacker"]);
@@ -84,8 +88,8 @@ int main(int argc, char *argv[]) {
       users["hacker"] = &hacker;
     }
 
-    AppContext appContext{users, cards,  emailServer,         server,
-                          box1,  hacker, leakVerificationCode};
+    AppContext appContext{users, cards,   emailServer, server,
+                          box1,  fakeBox, hacker,      leakVerificationCode};
 
     // Process actions from JSON file
     string actionFile = argv[1] + string("/actions.json");
@@ -158,11 +162,18 @@ int main(int argc, char *argv[]) {
         } else {
           cerr << "Hacker failed to steal card: " << cardId << endl;
         }
+      } else if (action == "dropToFake") {
+        string cardId = actionsJson[i]["cardId"].asString();
+        user.dropCard(&fakeBox, cardId);
       } else {
         cerr << "Unknown action: " << action << endl;
         return -1;
       }
-      Env::moveNow(1, 0, 0);
+      if (actionsJson[i]["timespan"].isString()) {
+        Env::moveNow(actionsJson[i]["timespan"].asString());
+      } else {
+        Env::moveNow(1, 0, 0);
+      }
       dumpJSON(appContext,
                argv[1] + string("/scenario") + to_string(i + 1) +
                    string(".json"),

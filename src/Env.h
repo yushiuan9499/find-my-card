@@ -39,5 +39,11 @@ public:
    * @param seconds: Number of seconds to move forward
    */
   static void moveNow(int hours, int minutes, int seconds);
+
+  /**
+   * @brief Move the current time forward by a specified amount
+   * @param time: format: "HH:MM:SS"
+   */
+  static void moveNow(const std::string time);
 };
 #endif // ENV_H

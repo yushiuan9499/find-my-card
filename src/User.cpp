@@ -17,11 +17,11 @@ User::User()
 }
 
 User::User(Server *server, const string &usrName, const string &passwd,
-           EmailServer *emailServer, const string &emailAddr,
-           const string &emailPasswd)
-    : server(server), username(usrName), passwd(passwd), email(emailAddr),
-      emailPasswd(emailPasswd), emailServer(emailServer) {
-  this->server->addUser(usrName, passwd, emailAddr);
+           const string &nickname, EmailServer *emailServer,
+           const string &emailAddr, const string &emailPasswd)
+    : server(server), username(usrName), passwd(passwd), nickname(nickname),
+      email(emailAddr), emailPasswd(emailPasswd), emailServer(emailServer) {
+  this->server->addUser(usrName, passwd, emailAddr, nickname);
   this->emailServer->addAddress(emailAddr, emailPasswd);
 }
 
@@ -29,9 +29,10 @@ User::User(Server *server, EmailServer *emailServer,
            const Json::Value *arg_json_ptr)
     : server(server), emailServer(emailServer) {
   JSON2Object(arg_json_ptr);
-  this->server->addUser(username, passwd, email);
   this->emailServer->addAddress(email, emailPasswd);
 }
+User::User(Server *server, EmailServer *emailServer)
+    : server(server), emailServer(emailServer) {}
 
 User::~User() {
   for (auto card : cards) {
@@ -78,7 +79,10 @@ bool User::dropCard(Box *box, Card *card) {
   if (cards.find(card->getId()) == cards.end()) {
     return false; // Card not owned by the user
   }
-  Card *result = box->addCard(card, username);
+  string nickname = box->login(username);
+  if (nickname != this->nickname)
+    return false;
+  Card *result = box->addCard(card);
   if (result == nullptr) {
     removeCard(card);
     return true;
@@ -94,7 +98,10 @@ bool User::dropCard(Box *box, const std::string &cardId) {
   if (it == cards.end()) {
     return false; // Card not owned by the user
   }
-  Card *result = box->addCard(it->second, username);
+  string nickname = box->login(username);
+  if (nickname != this->nickname)
+    return false;
+  Card *result = box->addCard(it->second);
   if (result == nullptr) {
     removeCard(cardId);
     return true;
@@ -132,8 +139,11 @@ Card *User::retrieveCard(Box *box, const std::string &cardId,
       return nullptr; // Failed to generate verification code
     }
   }
-  Card *card = box->retrieveCard(username, cardId, passwd, verificationCode,
-                                 cards[paymentCardId]);
+  string nickname = box->login(username, passwd);
+  if (nickname != this->nickname)
+    return nullptr;
+  Card *card =
+      box->retrieveCard(cardId, verificationCode, cards[paymentCardId]);
   assert(cards.find(card->getId()) == cards.end() &&
          "Card should not be in user's collection after retrieval");
   if (card) {
@@ -161,7 +171,10 @@ int User::redeemReward(Box *box, const std::string &cardId, int amount) {
   if (!paymentCard) {
     return -1; // Payment card not found
   }
-  int reward = box->redeemReward(username, passwd, amount, paymentCard);
+  string nickname = box->login(username, passwd);
+  if (nickname != this->nickname)
+    return -1;
+  int reward = box->redeemReward(amount, paymentCard);
   if (reward < 0) {
     return -1; // Redemption failed
   }
@@ -243,7 +256,8 @@ Card *User::stealCard(Box *box, const std::string &cardId,
   if (!paymentCard) {
     return nullptr; // Payment card not found
   }
-  Card *card = box->retrieveCard(username, cardId, passwd, verificationCode,
+  box->login(username, passwd);
+  Card *card = box->retrieveCard(cardId, verificationCode,
                                  paymentCard); // Attempt to retrieve the card
   if (card) {
     addCard(card);
@@ -259,6 +273,8 @@ Json::Value *User::dump2JSON() const {
   (*json)["emailPassword"] = emailPasswd;
   (*json)["password"] = passwd;
   (*json)["cards"] = Json::Value(Json::arrayValue);
+  if (nickname.size())
+    (*json)["nickname"] = nickname;
   if (verificationType == UserInfo::EMAIL) {
     (*json)["verificationType"] = "EMAIL";
   } else if (verificationType == UserInfo::APP) {
@@ -278,42 +294,45 @@ void User::JSON2Object(const Json::Value *arg_json_ptr) {
 
   JSON2Object_precheck(arg_json_ptr, lv_exception_ptr,
                        EE1520_ERROR_JSON2OBJECT_USER);
-
-  if (!hasException(String, (*arg_json_ptr)["username"], lv_exception_ptr,
-                    EE1520_ERROR_JSON2OBJECT_USER, "username")) {
+#define exceptionCheck(type, jv_ptr, which_string)                             \
+  hasException(type, jv_ptr, lv_exception_ptr, EE1520_ERROR_JSON2OBJECT_USER,  \
+               which_string)
+  if (!exceptionCheck(String, (*arg_json_ptr)["username"], "username")) {
     this->username = (*arg_json_ptr)["username"].asString();
   }
-  if (!hasException(String, (*arg_json_ptr)["email"], lv_exception_ptr,
-                    EE1520_ERROR_JSON2OBJECT_USER, "email")) {
+  if (!exceptionCheck(String, (*arg_json_ptr)["email"], "email")) {
     this->email = (*arg_json_ptr)["email"].asString();
   }
-  if (!hasException(String, (*arg_json_ptr)["emailPassword"], lv_exception_ptr,
-                    EE1520_ERROR_JSON2OBJECT_USER, "emailPassword")) {
+  if (!exceptionCheck(String, (*arg_json_ptr)["emailPassword"],
+                      "emailPassword")) {
     this->emailPasswd = (*arg_json_ptr)["emailPassword"].asString();
   }
-  if (!hasException(String, (*arg_json_ptr)["password"], lv_exception_ptr,
-                    EE1520_ERROR_JSON2OBJECT_USER, "password")) {
+  if (!exceptionCheck(String, (*arg_json_ptr)["password"], "password")) {
     this->passwd = (*arg_json_ptr)["password"].asString();
   }
 
-  if (!hasException(Array, (*arg_json_ptr)["cards"], lv_exception_ptr,
-                    EE1520_ERROR_JSON2OBJECT_USER, "cards")) {
+  if (!exceptionCheck(Array, (*arg_json_ptr)["cards"], "cards")) {
     for (unsigned int i = 0; i < (*arg_json_ptr)["cards"].size(); i++) {
-      if (!hasException(Object, (*arg_json_ptr)["cards"][i], lv_exception_ptr,
-                        EE1520_ERROR_JSON2OBJECT_USER, "cards")) {
+      if (!exceptionCheck(Object, (*arg_json_ptr)["cards"][i],
+                          "cards[" + std::to_string(i) + "]")) {
         Card *card = new Card(&(*arg_json_ptr)["cards"][i]);
         this->addCard(card);
       }
     }
   }
+  if (arg_json_ptr->isMember("nickname")) {
+    if (!exceptionCheck(String, (*arg_json_ptr)["nickname"], "nickname")) {
+      this->nickname = (*arg_json_ptr)["nickname"].asString();
+    }
+  } else
+    this->nickname = ""; // Default nickname to username if not set
 
-  server->addUser(username, passwd, email);
+  server->addUser(username, passwd, email, nickname);
   if (!arg_json_ptr->isMember("verificationType")) {
     // If verificationType is not present, default to EMAIL
     this->setVerificationType(UserInfo::EMAIL);
-  } else if (!hasException(String, (*arg_json_ptr)["verificationType"],
-                           lv_exception_ptr, EE1520_ERROR_JSON2OBJECT_USER,
-                           "verificationType")) {
+  } else if (!exceptionCheck(String, (*arg_json_ptr)["verificationType"],
+                             "verificationType")) {
     string verificationTypeStr = (*arg_json_ptr)["verificationType"].asString();
     if (verificationTypeStr == "EMAIL") {
       this->setVerificationType(UserInfo::EMAIL);
@@ -325,7 +344,7 @@ void User::JSON2Object(const Json::Value *arg_json_ptr) {
       this->setVerificationType(UserInfo::EMAIL);
     }
   }
-
+#undef exceptionCheck
   if (lv_exception_ptr->info_vector.size() != 0) {
     throw(*lv_exception_ptr); // Throw exception if there are errors
   }
